@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id        String    @id @default(cuid())
+  name      String
+  company   String?
+  email     String?
+  phone     String?
+  notes     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  projects  Project[]
+  invoices  Invoice[]
+}
+
+model Project {
+  id          String    @id @default(cuid())
+  title       String
+  clientId    String
+  client      Client    @relation(fields: [clientId], references: [id])
+  status      String    @default("LEAD") // LEAD, IN_PROGRESS, REVIEW, DELIVERED, COMPLETED, CANCELLED
+  amount      Int       @default(0) // 受注金額（税抜・円）
+  startDate   DateTime?
+  dueDate     DateTime?
+  siteUrl     String?
+  description String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  tasks       Task[]
+  invoices    Invoice[]
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  projectId   String?
+  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  dueDate     DateTime?
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  clientId      String
+  client        Client        @relation(fields: [clientId], references: [id])
+  projectId     String?
+  project       Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  status        String        @default("DRAFT") // DRAFT, SENT, PAID
+  issueDate     DateTime      @default(now())
+  dueDate       DateTime?
+  taxRate       Int           @default(10) // 消費税率（%）
+  notes         String?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  items         InvoiceItem[]
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int     @default(1)
+  unitPrice   Int     @default(0) // 税抜・円
+  sortOrder   Int     @default(0)
+}
+
+model Settings {
+  id                 String  @id @default("default")
+  businessName       String  @default("")
+  postalCode         String?
+  address            String?
+  phone              String?
+  email              String?
+  registrationNumber String? // 適格請求書発行事業者登録番号（T+13桁）
+  bankInfo           String? // 振込先情報
+  defaultTaxRate     Int     @default(10)
+  paymentTermDays    Int     @default(30) // 支払期限（発行日からの日数）
+  invoiceNotes       String? // 請求書の備考デフォルト
+}
