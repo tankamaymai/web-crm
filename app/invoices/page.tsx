@@ -35,7 +35,10 @@ export default async function InvoicesPage({
       include: { items: true },
     })
   ).reduce(
-    (sum, inv) => sum + calcInvoiceTotals(inv.items, inv.taxRate).total,
+    (sum, inv) =>
+      sum +
+      calcInvoiceTotals(inv.items, inv.taxRate, inv.taxMode, inv.issueDate)
+        .total,
     0
   );
 
@@ -91,7 +94,12 @@ export default async function InvoicesPage({
               </tr>
             )}
             {invoices.map((inv) => {
-              const { total } = calcInvoiceTotals(inv.items, inv.taxRate);
+              const { total } = calcInvoiceTotals(
+                inv.items,
+                inv.taxRate,
+                inv.taxMode,
+                inv.issueDate
+              );
               return (
                 <tr key={inv.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">

@@ -6,11 +6,12 @@ import {
   setInvoiceStatus,
   updateInvoice,
 } from "@/app/actions/invoices";
-import { calcInvoiceTotals } from "@/lib/invoice";
+import { calcInvoiceTotals, transitionalDeductionRate } from "@/lib/invoice";
 import { formatDate, formatYen, toDateInputValue } from "@/lib/dates";
 import PageHeader from "@/components/PageHeader";
 import { InvoiceStatusBadge } from "@/components/StatusBadge";
 import DeleteButton from "@/components/DeleteButton";
+import TaxModeSelect from "@/components/TaxModeSelect";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -32,9 +33,14 @@ export default async function InvoiceDetailPage({
   });
   if (!invoice) notFound();
 
-  const { subtotal, taxAmount, total } = calcInvoiceTotals(
+  const { subtotal, taxAmount, adjustment, total } = calcInvoiceTotals(
     invoice.items,
-    invoice.taxRate
+    invoice.taxRate,
+    invoice.taxMode,
+    invoice.issueDate
+  );
+  const deductionPercent = Math.round(
+    transitionalDeductionRate(invoice.issueDate) * 100
   );
   const inputClass =
     "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm";
@@ -137,13 +143,26 @@ export default async function InvoiceDetailPage({
                 </tr>
                 <tr>
                   <td colSpan={3} className="py-1 text-right text-gray-500">
-                    消費税（{invoice.taxRate}%）
+                    {invoice.taxMode === "STANDARD"
+                      ? `消費税（${invoice.taxRate}%）`
+                      : `消費税相当額（${invoice.taxRate}%）`}
                   </td>
                   <td className="py-1 text-right tabular-nums">
                     {formatYen(taxAmount)}
                   </td>
                   <td></td>
                 </tr>
+                {adjustment !== 0 && (
+                  <tr>
+                    <td colSpan={3} className="py-1 text-right text-orange-600">
+                      経過措置調整（インボイス未登録・控除{deductionPercent}%）
+                    </td>
+                    <td className="py-1 text-right tabular-nums text-orange-600">
+                      −{formatYen(-adjustment)}
+                    </td>
+                    <td></td>
+                  </tr>
+                )}
                 <tr className="font-bold text-base">
                   <td colSpan={3} className="py-2 text-right">
                     合計（税込）
@@ -250,6 +269,10 @@ export default async function InvoiceDetailPage({
                   defaultValue={invoice.taxRate}
                   className={inputClass}
                 />
+              </label>
+              <label className="block">
+                <span className="text-sm text-gray-600">消費税の計算方法</span>
+                <TaxModeSelect defaultValue={invoice.taxMode} />
               </label>
               <label className="block">
                 <span className="text-sm text-gray-600">備考</span>

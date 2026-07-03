@@ -1,15 +1,20 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { TAX_MODES } from "@/lib/invoice";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 function clientData(formData: FormData) {
+  const taxMode = formData.get("taxMode") as string;
   return {
     name: (formData.get("name") as string).trim(),
     company: (formData.get("company") as string) || null,
     email: (formData.get("email") as string) || null,
     phone: (formData.get("phone") as string) || null,
+    taxMode: TAX_MODES.includes(taxMode as (typeof TAX_MODES)[number])
+      ? taxMode
+      : "STANDARD",
     notes: (formData.get("notes") as string) || null,
   };
 }

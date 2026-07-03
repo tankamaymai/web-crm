@@ -1,7 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { createClient, deleteClient } from "@/app/actions/clients";
+import { TAX_MODE_SHORT_LABELS } from "@/lib/invoice";
 import PageHeader from "@/components/PageHeader";
 import DeleteButton from "@/components/DeleteButton";
+import TaxModeSelect from "@/components/TaxModeSelect";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -24,6 +26,7 @@ export default async function ClientsPage() {
               <th className="px-4 py-3 font-medium">会社名</th>
               <th className="px-4 py-3 font-medium">メール</th>
               <th className="px-4 py-3 font-medium">電話</th>
+              <th className="px-4 py-3 font-medium">消費税計算</th>
               <th className="px-4 py-3 font-medium text-right">案件数</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -31,7 +34,7 @@ export default async function ClientsPage() {
           <tbody className="divide-y divide-gray-100">
             {clients.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
                   顧客がまだ登録されていません。下のフォームから登録してください。
                 </td>
               </tr>
@@ -42,6 +45,15 @@ export default async function ClientsPage() {
                 <td className="px-4 py-3 text-gray-600">{client.company ?? "—"}</td>
                 <td className="px-4 py-3 text-gray-600">{client.email ?? "—"}</td>
                 <td className="px-4 py-3 text-gray-600">{client.phone ?? "—"}</td>
+                <td className="px-4 py-3 text-gray-600">
+                  {client.taxMode === "STANDARD" ? (
+                    TAX_MODE_SHORT_LABELS[client.taxMode]
+                  ) : (
+                    <span className="inline-block rounded-full bg-orange-100 text-orange-700 px-2.5 py-0.5 text-xs font-medium whitespace-nowrap">
+                      {TAX_MODE_SHORT_LABELS[client.taxMode] ?? client.taxMode}
+                    </span>
+                  )}
+                </td>
                 <td className="px-4 py-3 text-right">{client._count.projects}</td>
                 <td className="px-4 py-3 text-right whitespace-nowrap">
                   <Link
@@ -93,6 +105,12 @@ export default async function ClientsPage() {
               name="phone"
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
+          </label>
+          <label className="block col-span-2">
+            <span className="text-sm text-gray-600">
+              消費税の計算方法（この顧客への請求書のデフォルト）
+            </span>
+            <TaxModeSelect />
           </label>
           <label className="block col-span-2">
             <span className="text-sm text-gray-600">メモ</span>

@@ -13,6 +13,7 @@ model Client {
   company   String?
   email     String?
   phone     String?
+  taxMode   String    @default("STANDARD") // 消費税計算のデフォルト: STANDARD, ADJUSTED_DISCOUNT, ADJUSTED_EXACT
   notes     String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -62,6 +63,7 @@ model Invoice {
   issueDate     DateTime      @default(now())
   dueDate       DateTime?
   taxRate       Int           @default(10) // 消費税率（%）
+  taxMode       String        @default("STANDARD") // STANDARD, ADJUSTED_DISCOUNT, ADJUSTED_EXACT
   notes         String?
   paidAt        DateTime?
   createdAt     DateTime      @default(now())

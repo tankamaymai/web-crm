@@ -95,10 +95,15 @@ export default async function DashboardPage() {
     invoices: {
       items: { quantity: number; unitPrice: number }[];
       taxRate: number;
+      taxMode: string;
+      issueDate: Date;
     }[]
   ) =>
     invoices.reduce(
-      (sum, inv) => sum + calcInvoiceTotals(inv.items, inv.taxRate).total,
+      (sum, inv) =>
+        sum +
+        calcInvoiceTotals(inv.items, inv.taxRate, inv.taxMode, inv.issueDate)
+          .total,
       0
     );
 

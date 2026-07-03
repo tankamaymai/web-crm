@@ -6,7 +6,7 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
-import { calcInvoiceTotals } from "@/lib/invoice";
+import { calcInvoiceTotals, transitionalDeductionRate } from "@/lib/invoice";
 import { formatDate, formatYen } from "@/lib/dates";
 import type { Client, Invoice, InvoiceItem, Settings } from "@prisma/client";
 import path from "path";
@@ -21,7 +21,8 @@ Font.register({
   ],
 });
 
-// 数字の3桁区切りカンマ等でハイフネーションされないようにする
+// 単語内で折り返すとreact-pdfがハイフンを挿入するため、単語単位を維持する。
+// 長文は表示側で行を分けること。
 Font.registerHyphenationCallback((word) => [word]);
 
 const styles = StyleSheet.create({
@@ -114,9 +115,15 @@ export default function InvoicePdf({
   invoice: InvoiceForPdf;
   settings: Settings;
 }) {
-  const { subtotal, taxAmount, total } = calcInvoiceTotals(
+  const { subtotal, taxAmount, adjustment, total } = calcInvoiceTotals(
     invoice.items,
-    invoice.taxRate
+    invoice.taxRate,
+    invoice.taxMode,
+    invoice.issueDate
+  );
+  const adjusted = invoice.taxMode !== "STANDARD" && adjustment !== 0;
+  const deductionPercent = Math.round(
+    transitionalDeductionRate(invoice.issueDate) * 100
   );
   const clientLabel = invoice.client.company
     ? `${invoice.client.company} ${invoice.client.name} 様`
@@ -185,10 +192,18 @@ export default function InvoicePdf({
           </View>
           <View style={styles.sumRow}>
             <Text style={styles.sumLabel}>
-              {invoice.taxRate}%対象 消費税
+              {adjusted
+                ? `消費税相当額（${invoice.taxRate}%）`
+                : `${invoice.taxRate}%対象 消費税`}
             </Text>
             <Text style={styles.sumValue}>{formatYen(taxAmount)}</Text>
           </View>
+          {adjusted && (
+            <View style={styles.sumRow}>
+              <Text style={styles.sumLabel}>調整値引き（経過措置）</Text>
+              <Text style={styles.sumValue}>-{formatYen(-adjustment)}</Text>
+            </View>
+          )}
           <View style={styles.sumRow}>
             <Text style={[styles.sumLabel, styles.grandTotal]}>
               合計（税込）
@@ -213,6 +228,18 @@ export default function InvoicePdf({
           <View style={styles.footerBox}>
             <Text style={styles.footerTitle}>備考</Text>
             <Text>{invoice.notes}</Text>
+          </View>
+        )}
+
+        {adjusted && (
+          <View style={{ marginTop: 12 }}>
+            <Text style={{ color: "#475569", fontSize: 8 }}>
+              ※ 当方はインボイス（適格請求書発行事業者）未登録のため、
+            </Text>
+            <Text style={{ color: "#475569", fontSize: 8 }}>
+              仕入税額控除の対象とならない消費税相当分を調整値引きしています（経過措置による控除割合
+              {deductionPercent}%）。
+            </Text>
           </View>
         )}
       </Page>

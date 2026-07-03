@@ -46,7 +46,7 @@ async function main() {
       address: "東京都渋谷区神宮前1-2-3",
       phone: "03-1234-5678",
       email: "hello@example.com",
-      registrationNumber: "T1234567890123",
+      // インボイス登録済みの場合のみ設定画面で登録番号を入力する
       bankInfo: "サンプル銀行 渋谷支店\n普通 1234567\nヤマダ タロウ",
       defaultTaxRate: 10,
       paymentTermDays: 30,
@@ -74,6 +74,8 @@ async function main() {
         name: "佐藤 健",
         company: "サトウ整体院",
         phone: "080-3333-4444",
+        // インボイス経過措置の調整計算を求められている取引先の例
+        taxMode: "ADJUSTED_DISCOUNT",
       },
     }),
   ]);

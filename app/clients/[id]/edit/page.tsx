@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { updateClient } from "@/app/actions/clients";
 import PageHeader from "@/components/PageHeader";
+import TaxModeSelect from "@/components/TaxModeSelect";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -53,6 +54,12 @@ export default async function ClientEditPage({
               defaultValue={client.phone ?? ""}
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
+          </label>
+          <label className="block col-span-2">
+            <span className="text-sm text-gray-600">
+              消費税の計算方法（この顧客への請求書のデフォルト）
+            </span>
+            <TaxModeSelect defaultValue={client.taxMode} />
           </label>
           <label className="block col-span-2">
             <span className="text-sm text-gray-600">メモ</span>

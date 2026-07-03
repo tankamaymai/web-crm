@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { deleteProject } from "@/app/actions/projects";
 import { createInvoiceFromProject } from "@/app/actions/invoices";
+import { calcInvoiceTotals } from "@/lib/invoice";
 import { toggleTask, deleteTask, createTask } from "@/app/actions/tasks";
 import { formatDate, formatYen } from "@/lib/dates";
 import PageHeader from "@/components/PageHeader";
@@ -198,11 +199,12 @@ export default async function ProjectDetailPage({
                 </li>
               )}
               {project.invoices.map((inv) => {
-                const subtotal = inv.items.reduce(
-                  (s, i) => s + i.quantity * i.unitPrice,
-                  0
+                const { total } = calcInvoiceTotals(
+                  inv.items,
+                  inv.taxRate,
+                  inv.taxMode,
+                  inv.issueDate
                 );
-                const total = subtotal + Math.floor((subtotal * inv.taxRate) / 100);
                 return (
                   <li key={inv.id} className="text-sm">
                     <Link

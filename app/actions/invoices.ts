@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { addDays, parseDateInput, todayJST } from "@/lib/dates";
-import { nextInvoiceNumber } from "@/lib/invoice";
+import { nextInvoiceNumber, TAX_MODES } from "@/lib/invoice";
 import { getSettings } from "@/lib/settings";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -17,6 +17,7 @@ function revalidateInvoicePages(id?: string) {
 export async function createInvoiceFromProject(projectId: string) {
   const project = await prisma.project.findUniqueOrThrow({
     where: { id: projectId },
+    include: { client: true },
   });
   const settings = await getSettings();
   const issueDate = todayJST();
@@ -28,6 +29,7 @@ export async function createInvoiceFromProject(projectId: string) {
       issueDate,
       dueDate: addDays(issueDate, settings.paymentTermDays),
       taxRate: settings.defaultTaxRate,
+      taxMode: project.client.taxMode,
       notes: settings.invoiceNotes,
       items: {
         create: [
@@ -45,12 +47,16 @@ export async function createInvoiceFromProject(projectId: string) {
 }
 
 export async function updateInvoice(id: string, formData: FormData) {
+  const taxMode = formData.get("taxMode") as string;
   await prisma.invoice.update({
     where: { id },
     data: {
       issueDate: parseDateInput(formData.get("issueDate") as string) ?? todayJST(),
       dueDate: parseDateInput(formData.get("dueDate") as string),
       taxRate: parseInt(formData.get("taxRate") as string, 10) || 10,
+      taxMode: TAX_MODES.includes(taxMode as (typeof TAX_MODES)[number])
+        ? taxMode
+        : "STANDARD",
       notes: (formData.get("notes") as string) || null,
     },
   });
