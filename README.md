@@ -27,7 +27,7 @@ PostgreSQL データベース（[Vercel Postgres](https://vercel.com/docs/storag
 # 依存関係のインストール
 npm install
 
-# 環境変数（DATABASE_URL / DIRECT_URL に接続文字列を設定）
+# 環境変数（DATABASE_URL に接続文字列を設定）
 cp .env.example .env
 
 # データベースにマイグレーションを適用
@@ -48,7 +48,7 @@ http://localhost:3000 で起動します。
 
 1. Vercel ダッシュボードでこのリポジトリをプロジェクトとしてインポート
 2. Storage タブから Postgres（Neon 等）を追加し、プロジェクトに接続する
-   - 接続すると `DATABASE_URL` / `DIRECT_URL`（または `POSTGRES_PRISMA_URL` 等）が自動でプロジェクトの環境変数に設定される。変数名が異なる場合は `prisma/schema.prisma` の `env()` 参照名を合わせる
+   - 接続すると `DATABASE_URL`（または `POSTGRES_PRISMA_URL` 等）が自動でプロジェクトの環境変数に設定される。変数名が異なる場合は `prisma/schema.prisma` の `env()` 参照名を合わせる
 3. デプロイを実行すると、ビルド時に `prisma migrate deploy` が自動実行されテーブルが作成される（`package.json` の `vercel-build` スクリプト）
 
 ## データについて
