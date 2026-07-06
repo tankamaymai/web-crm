@@ -26,7 +26,8 @@ export default function MonthlyChart({ data }: { data: MonthlyDatum[] }) {
           dataKey="month"
           tickLine={false}
           axisLine={{ stroke: "#d1d5db" }}
-          tick={{ fontSize: 12, fill: "#6b7280" }}
+          tick={{ fontSize: 11, fill: "#6b7280" }}
+          interval={0}
         />
         <YAxis
           tickLine={false}
@@ -39,7 +40,7 @@ export default function MonthlyChart({ data }: { data: MonthlyDatum[] }) {
           cursor={{ fill: "rgba(0,0,0,0.04)" }}
           formatter={(value) => [
             `¥${Number(value).toLocaleString("ja-JP")}`,
-            "入金額",
+            "売上",
           ]}
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
         />
