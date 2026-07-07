@@ -382,7 +382,7 @@ export default function InvoicePdf({
             <Text style={styles.cellDesc}>摘要</Text>
             <Text style={styles.cellQty}>数量</Text>
             <Text style={styles.cellPrice}>単価</Text>
-            <Text style={styles.cellAmount}>金額(税抜)</Text>
+            <Text style={styles.cellAmount}>金額(税込)</Text>
           </View>
           {invoice.items.map((item) => (
             <View key={item.id} style={styles.tableRow}>
@@ -423,21 +423,19 @@ export default function InvoicePdf({
           </View>
 
           <View style={styles.sumBlock}>
-            <View style={styles.sumRow}>
-              <Text style={styles.sumLabel}>小計(税抜)</Text>
-              <Text style={styles.sumValue}>{yen(subtotal)}</Text>
-            </View>
-            <View style={styles.sumRow}>
-              <Text style={styles.sumLabel}>
-                {adjusted ? "消費税相当額" : "消費税"}
-              </Text>
-              <Text style={styles.sumValue}>{yen(taxAmount)}</Text>
-            </View>
             {adjusted && (
-              <View style={styles.sumRow}>
-                <Text style={styles.sumLabel}>調整値引き</Text>
-                <Text style={styles.sumValue}>-{yen(-adjustment)}</Text>
-              </View>
+              <>
+                <View style={styles.sumRow}>
+                  <Text style={styles.sumLabel}>小計(税込)</Text>
+                  <Text style={styles.sumValue}>
+                    {yen(subtotal + taxAmount)}
+                  </Text>
+                </View>
+                <View style={styles.sumRow}>
+                  <Text style={styles.sumLabel}>調整値引き</Text>
+                  <Text style={styles.sumValue}>-{yen(-adjustment)}</Text>
+                </View>
+              </>
             )}
             <View style={styles.sumRow}>
               <Text style={styles.sumLabel}>合計</Text>

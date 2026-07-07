@@ -21,10 +21,12 @@ export async function nextInvoiceNumber(): Promise<string> {
 // できない（経過措置: 〜2026/9 は80%、2026/10〜2029/9 は50%、以降は0%）。
 // 買い手の実質負担をインボイス登録事業者と揃えるための調整計算を選べる。
 //
-// 例）税抜45,000円・税率10%・控除割合80% の場合:
-//   STANDARD:          49,500円（調整なし）
-//   ADJUSTED_DISCOUNT: 48,600円（控除できない 900円 を値引き）
-//   ADJUSTED_EXACT:    48,529円（相手の実質負担がちょうど 45,000円 になる額 = 45,000×110/102）
+// 金額はすべて税込（内税）で入力・保存し、消費税は合計から逆算する。
+//
+// 例）税込16,500円（税抜15,000円＋消費税1,500円）・控除割合80% の場合:
+//   STANDARD:          16,500円（調整なし）
+//   ADJUSTED_DISCOUNT: 16,200円（控除できない 300円 を値引き）
+//   ADJUSTED_EXACT:    16,176円（相手の実質負担がちょうど税抜15,000円になる額 = 15,000×110/102）
 
 export const TAX_MODES = [
   "STANDARD",
@@ -35,7 +37,7 @@ export const TAX_MODES = [
 export type TaxMode = (typeof TAX_MODES)[number];
 
 export const TAX_MODE_LABELS: Record<string, string> = {
-  STANDARD: "通常（税抜＋消費税）",
+  STANDARD: "通常（税込）",
   ADJUSTED_DISCOUNT: "インボイス未登録調整：控除不可分を値引き",
   ADJUSTED_EXACT: "インボイス未登録調整：実質負担を税抜額に一致",
 };
@@ -56,10 +58,13 @@ export function transitionalDeductionRate(issueDate: Date): number {
 }
 
 export type InvoiceTotals = {
+  /** 税抜金額（税込合計から逆算） */
   subtotal: number;
+  /** 内消費税額（税込合計から逆算） */
   taxAmount: number;
   /** 経過措置調整による値引き額（負の値。調整なしなら0） */
   adjustment: number;
+  /** 請求合計（税込・調整後） */
   total: number;
 };
 
@@ -69,8 +74,13 @@ export function calcInvoiceTotals(
   taxMode: string = "STANDARD",
   issueDate?: Date | null
 ): InvoiceTotals {
-  const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
-  const taxAmount = Math.floor((subtotal * taxRate) / 100);
+  // unitPrice は税込。内税（税込合計 ×税率/(100+税率)）を逆算する
+  const totalInclusive = items.reduce(
+    (sum, i) => sum + i.quantity * i.unitPrice,
+    0
+  );
+  const taxAmount = Math.floor((totalInclusive * taxRate) / (100 + taxRate));
+  const subtotal = totalInclusive - taxAmount;
   let adjustment = 0;
   if (taxMode === "ADJUSTED_DISCOUNT" || taxMode === "ADJUSTED_EXACT") {
     const rate = transitionalDeductionRate(issueDate ?? todayJST());
@@ -80,11 +90,16 @@ export function calcInvoiceTotals(
     } else {
       // 相手の実質負担 = T ×(1 − 税率/(100+税率)×控除割合) が税抜額と一致する T を請求
       // T = 税抜額 ×(100+税率)/(100+税率−税率×控除割合) 例: 10%・控除80% → ×110/102
-      const total = Math.round(
+      const target = Math.round(
         (subtotal * (100 + taxRate)) / (100 + taxRate - taxRate * rate)
       );
-      adjustment = total - subtotal - taxAmount;
+      adjustment = target - totalInclusive;
     }
   }
-  return { subtotal, taxAmount, adjustment, total: subtotal + taxAmount + adjustment };
+  return {
+    subtotal,
+    taxAmount,
+    adjustment,
+    total: totalInclusive + adjustment,
+  };
 }

@@ -102,8 +102,8 @@ export default async function InvoiceDetailPage({
                 <tr>
                   <th className="py-2 font-medium">品目</th>
                   <th className="py-2 font-medium text-right w-20">数量</th>
-                  <th className="py-2 font-medium text-right w-32">単価</th>
-                  <th className="py-2 font-medium text-right w-32">金額</th>
+                  <th className="py-2 font-medium text-right w-32">単価(税込)</th>
+                  <th className="py-2 font-medium text-right w-32">金額(税込)</th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
@@ -134,18 +134,18 @@ export default async function InvoiceDetailPage({
               <tfoot className="border-t border-gray-200">
                 <tr>
                   <td colSpan={3} className="py-2 text-right text-gray-500">
-                    小計（税抜）
+                    小計（税抜 {formatYen(subtotal)}）
                   </td>
                   <td className="py-2 text-right tabular-nums">
-                    {formatYen(subtotal)}
+                    {formatYen(subtotal + taxAmount)}
                   </td>
                   <td></td>
                 </tr>
                 <tr>
                   <td colSpan={3} className="py-1 text-right text-gray-500">
                     {invoice.taxMode === "STANDARD"
-                      ? `消費税（${invoice.taxRate}%）`
-                      : `消費税相当額（${invoice.taxRate}%）`}
+                      ? `内 消費税（${invoice.taxRate}%）`
+                      : `内 消費税相当額（${invoice.taxRate}%）`}
                   </td>
                   <td className="py-1 text-right tabular-nums">
                     {formatYen(taxAmount)}
@@ -196,7 +196,7 @@ export default async function InvoiceDetailPage({
                 name="unitPrice"
                 type="number"
                 min={0}
-                placeholder="単価"
+                placeholder="単価（税込）"
                 className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm"
               />
               <button

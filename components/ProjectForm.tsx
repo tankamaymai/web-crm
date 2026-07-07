@@ -56,7 +56,7 @@ export default function ProjectForm({
         </select>
       </label>
       <label className="block">
-        <span className="text-sm text-gray-600">受注金額（税抜・円）</span>
+        <span className="text-sm text-gray-600">受注金額（税込・円）</span>
         <input
           name="amount"
           type="number"
