@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { toggleTask } from "@/app/actions/tasks";
 import { calcInvoiceTotals } from "@/lib/invoice";
+import { getSettings } from "@/lib/settings";
 import { addMonths, formatYen, startOfMonth, todayJST } from "@/lib/dates";
 import { ACTIVE_PROJECT_STATUSES } from "@/lib/status";
 import { ProjectStatusBadge } from "@/components/StatusBadge";
@@ -39,6 +40,29 @@ function StatCard({
   );
 }
 
+function PipelineStage({
+  label,
+  value,
+  sub,
+  barClass,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  barClass: string;
+}) {
+  return (
+    <div className="rounded-lg border border-gray-100 bg-gray-50/60 p-3">
+      <div className={`h-1.5 rounded-full ${barClass} mb-2`} />
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className="mt-0.5 text-lg font-bold tabular-nums text-slate-800">
+        {value}
+      </p>
+      <p className="text-xs text-gray-400">{sub}</p>
+    </div>
+  );
+}
+
 export default async function DashboardPage() {
   const today = todayJST();
   const thisMonth = startOfMonth(today);
@@ -46,16 +70,37 @@ export default async function DashboardPage() {
   const yearStart = new Date(Date.UTC(today.getUTCFullYear(), 0, 1));
   const nextYearStart = new Date(Date.UTC(today.getUTCFullYear() + 1, 0, 1));
 
-  const [salesInvoices, activeProjectCount, todayTasks, upcomingProjects] =
-    await Promise.all([
-      // 売上請求書 = 発行済み(SENT) + 入金済み(PAID)。発行日基準で集計する。
-      // 累計売上の計算に全期間が必要（個人利用の件数規模のため全件取得でOK）
-      prisma.invoice.findMany({
-        where: { status: { in: ["SENT", "PAID"] } },
-        include: { items: true },
-      }),
-      prisma.project.count({
+  const [
+    settings,
+    salesInvoices,
+    activeProjectCount,
+    leadProjects,
+    activeUnbilledProjects,
+    todayTasks,
+    upcomingProjects,
+  ] = await Promise.all([
+    getSettings(),
+    // 売上請求書 = 発行済み(SENT) + 入金済み(PAID)。発行日基準で集計する。
+    // 累計売上の計算に全期間が必要（個人利用の件数規模のため全件取得でOK）
+    prisma.invoice.findMany({
+      where: { status: { in: ["SENT", "PAID"] } },
+      include: { items: true },
+    }),
+    prisma.project.count({
       where: { status: { in: ACTIVE_PROJECT_STATUSES } },
+    }),
+    // 見込み案件（未請求）: 請求書を1件も持たない LEAD 案件
+    prisma.project.findMany({
+      where: { status: "LEAD", invoices: { none: {} } },
+      select: { amount: true },
+    }),
+    // 進行中案件（未請求）: 請求書を1件も持たない進行中系案件
+    prisma.project.findMany({
+      where: {
+        status: { in: ["IN_PROGRESS", "REVIEW", "DELIVERED"] },
+        invoices: { none: {} },
+      },
+      select: { amount: true },
     }),
     prisma.task.findMany({
       where: { completed: false, dueDate: { lte: today } },
@@ -97,6 +142,19 @@ export default async function DashboardPage() {
     (inv) => inv.issueDate >= yearStart && inv.issueDate < nextYearStart
   );
   const unpaidInvoices = salesInvoices.filter((inv) => inv.status === "SENT");
+  const paidInvoices = salesInvoices.filter((inv) => inv.status === "PAID");
+
+  // 売上パイプライン（すべて税込に揃える）。案件は税別なので税込換算する。
+  const toInclusive = (amountExcl: number) =>
+    Math.round((amountExcl * (100 + settings.defaultTaxRate)) / 100);
+  const sumProjectsInclusive = (projects: { amount: number }[]) =>
+    projects.reduce((s, p) => s + toInclusive(p.amount), 0);
+
+  const leadTotal = sumProjectsInclusive(leadProjects);
+  const activeUnbilledTotal = sumProjectsInclusive(activeUnbilledProjects);
+  const unpaidTotal = totalOf(unpaidInvoices);
+  const paidTotal = totalOf(paidInvoices);
+  const pipelineTotal = leadTotal + activeUnbilledTotal + unpaidTotal + paidTotal;
 
   // 直近12ヶ月の月別売上（発行日基準）
   const monthlyData: MonthlyDatum[] = [];
@@ -116,7 +174,7 @@ export default async function DashboardPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">ダッシュボード</h1>
 
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-3 gap-4 mb-6">
         <StatCard
           label="今月の売上"
           value={formatYen(totalOf(issuedThisMonth))}
@@ -133,12 +191,48 @@ export default async function DashboardPage() {
           value={formatYen(totalOf(salesInvoices))}
           sub={`${salesInvoices.length}件発行`}
         />
-        <StatCard
-          label="未入金"
-          value={formatYen(totalOf(unpaidInvoices))}
-          sub={`${unpaidInvoices.length}件`}
-          accent="amber"
-        />
+      </div>
+
+      {/* 売上パイプライン: 見込み→進行中→請求済み→入金済み（すべて税込） */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="font-bold">売上パイプライン</h2>
+          <div className="text-right">
+            <span className="text-sm text-gray-500 mr-2">着地見込み合計</span>
+            <span className="text-2xl font-bold tabular-nums text-slate-800">
+              {formatYen(pipelineTotal)}
+            </span>
+          </div>
+        </div>
+        <div className="grid grid-cols-4 gap-3">
+          <PipelineStage
+            label="見込み"
+            value={formatYen(leadTotal)}
+            sub={`${leadProjects.length}件`}
+            barClass="bg-gray-300"
+          />
+          <PipelineStage
+            label="進行中（未請求）"
+            value={formatYen(activeUnbilledTotal)}
+            sub={`${activeUnbilledProjects.length}件`}
+            barClass="bg-blue-400"
+          />
+          <PipelineStage
+            label="請求済み・未入金"
+            value={formatYen(unpaidTotal)}
+            sub={`${unpaidInvoices.length}件`}
+            barClass="bg-amber-400"
+          />
+          <PipelineStage
+            label="入金済み"
+            value={formatYen(paidTotal)}
+            sub={`${paidInvoices.length}件`}
+            barClass="bg-emerald-500"
+          />
+        </div>
+        <p className="mt-3 text-xs text-gray-400">
+          将来（見込み・進行中）はすべてやり切った場合の税込金額です。
+        </p>
       </div>
 
       <div className="grid grid-cols-3 gap-6">

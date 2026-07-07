@@ -27,7 +27,7 @@ model Project {
   clientId    String
   client      Client    @relation(fields: [clientId], references: [id])
   status      String    @default("LEAD") // LEAD, IN_PROGRESS, REVIEW, DELIVERED, COMPLETED, CANCELLED
-  amount      Int       @default(0) // 受注金額（税込・円）
+  amount      Int       @default(0) // 受注金額（税別・円）
   startDate   DateTime?
   dueDate     DateTime?
   siteUrl     String?

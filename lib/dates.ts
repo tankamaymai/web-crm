@@ -28,6 +28,12 @@ export function addMonths(date: Date, months: number): Date {
   );
 }
 
+/** 発行月の翌月末日（例: 2026-07-08 → 2026-08-31） */
+export function endOfNextMonth(date: Date): Date {
+  // 翌々月の0日目 = 翌月の末日
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 2, 0));
+}
+
 /** "YYYY-MM-DD" (input[type=date] の値) → Date | null */
 export function parseDateInput(value: string | null | undefined): Date | null {
   if (!value) return null;

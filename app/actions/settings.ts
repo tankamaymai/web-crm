@@ -13,7 +13,8 @@ export async function updateSettings(formData: FormData) {
     registrationNumber: (formData.get("registrationNumber") as string) || null,
     bankInfo: (formData.get("bankInfo") as string) || null,
     defaultTaxRate: parseInt(formData.get("defaultTaxRate") as string, 10) || 10,
-    paymentTermDays: parseInt(formData.get("paymentTermDays") as string, 10) || 30,
+    // paymentTermDays はフォームから送られなくなった（支払期限は翌月末日固定）。
+    // 既存カラムは残すため、ここでは更新対象に含めない。
     invoiceNotes: (formData.get("invoiceNotes") as string) || null,
   };
   await prisma.settings.upsert({

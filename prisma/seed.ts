@@ -22,6 +22,10 @@ function monthsAgo(date: Date, months: number, day: number): Date {
   );
 }
 
+function endOfNextMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 2, 0));
+}
+
 function invoiceNumberFor(date: Date, seq: number): string {
   const ym = date.toISOString().slice(0, 7).replace("-", "");
   return `INV-${ym}-${String(seq).padStart(3, "0")}`;
@@ -85,7 +89,7 @@ async function main() {
       title: "田中商店 コーポレートサイト制作",
       clientId: tanaka.id,
       status: "IN_PROGRESS",
-      amount: 495000,
+      amount: 450000,
       startDate: addDays(today, -20),
       dueDate: addDays(today, 10),
       description: "10ページ構成のコーポレートサイト。WordPress実装。",
@@ -97,7 +101,7 @@ async function main() {
       title: "スズキ企画 キャンペーンLP",
       clientId: suzuki.id,
       status: "REVIEW",
-      amount: 198000,
+      amount: 180000,
       startDate: addDays(today, -10),
       dueDate: addDays(today, 3),
       description: "夏季キャンペーン用ランディングページ1枚。",
@@ -109,7 +113,7 @@ async function main() {
       title: "サトウ整体院 予約サイト",
       clientId: sato.id,
       status: "LEAD",
-      amount: 352000,
+      amount: 320000,
       dueDate: addDays(today, 40),
       description: "予約システム付きサイトの見積もり中。",
     },
@@ -120,7 +124,7 @@ async function main() {
       title: "田中商店 サイト保守（月額）",
       clientId: tanaka.id,
       status: "IN_PROGRESS",
-      amount: 33000,
+      amount: 30000,
       startDate: monthsAgo(today, 6, 1),
       description: "月額保守契約。毎月末請求。",
     },
@@ -131,7 +135,7 @@ async function main() {
       title: "スズキ企画 サイトリニューアル",
       clientId: suzuki.id,
       status: "COMPLETED",
-      amount: 660000,
+      amount: 600000,
       startDate: monthsAgo(today, 4, 5),
       dueDate: monthsAgo(today, 1, 20),
     },
@@ -182,7 +186,7 @@ async function main() {
         projectId: maintenance.id,
         status: "PAID",
         issueDate: issue,
-        dueDate: addDays(issue, 30),
+        dueDate: endOfNextMonth(issue),
         taxRate: 10,
         paidAt: addDays(issue, 15),
         items: {
@@ -207,7 +211,7 @@ async function main() {
       projectId: renewal.id,
       status: "PAID",
       issueDate: depositIssue,
-      dueDate: addDays(depositIssue, 30),
+      dueDate: endOfNextMonth(depositIssue),
       taxRate: 10,
       paidAt: addDays(depositIssue, 20),
       items: {
@@ -230,7 +234,7 @@ async function main() {
       projectId: renewal.id,
       status: "SENT",
       issueDate: balanceIssue,
-      dueDate: addDays(balanceIssue, 30),
+      dueDate: endOfNextMonth(balanceIssue),
       taxRate: 10,
       items: {
         create: [
@@ -255,7 +259,7 @@ async function main() {
       projectId: maintenance.id,
       status: "PAID",
       issueDate: thisMonthIssue,
-      dueDate: addDays(thisMonthIssue, 30),
+      dueDate: endOfNextMonth(thisMonthIssue),
       taxRate: 10,
       paidAt: addDays(thisMonthIssue, 1),
       items: {

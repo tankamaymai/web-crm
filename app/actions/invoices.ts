@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { addDays, parseDateInput, todayJST } from "@/lib/dates";
+import { endOfNextMonth, parseDateInput, todayJST } from "@/lib/dates";
 import { nextInvoiceNumber, TAX_MODES } from "@/lib/invoice";
 import { getSettings } from "@/lib/settings";
 import { revalidatePath } from "next/cache";
@@ -27,7 +27,8 @@ export async function createInvoiceFromProject(projectId: string) {
       clientId: project.clientId,
       projectId: project.id,
       issueDate,
-      dueDate: addDays(issueDate, settings.paymentTermDays),
+      // 支払期限は発行月の翌月末日
+      dueDate: endOfNextMonth(issueDate),
       taxRate: settings.defaultTaxRate,
       taxMode: project.client.taxMode,
       notes: settings.invoiceNotes,
@@ -36,7 +37,10 @@ export async function createInvoiceFromProject(projectId: string) {
           {
             description: project.title,
             quantity: 1,
-            unitPrice: project.amount,
+            // 案件の受注金額は税別。請求書は税込で保持するため税込に換算する
+            unitPrice: Math.round(
+              (project.amount * (100 + settings.defaultTaxRate)) / 100
+            ),
           },
         ],
       },
