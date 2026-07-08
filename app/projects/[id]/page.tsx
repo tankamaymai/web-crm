@@ -96,7 +96,7 @@ export default async function ProjectDetailPage({
                 </dd>
               </div>
               <div>
-                <dt className="text-gray-500">受注金額（税抜）</dt>
+                <dt className="text-gray-500">受注金額（税別）</dt>
                 <dd className="mt-0.5 font-medium tabular-nums">
                   {formatYen(project.amount)}
                 </dd>

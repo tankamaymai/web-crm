@@ -27,7 +27,7 @@ model Project {
   clientId    String
   client      Client    @relation(fields: [clientId], references: [id])
   status      String    @default("LEAD") // LEAD, IN_PROGRESS, REVIEW, DELIVERED, COMPLETED, CANCELLED
-  amount      Int       @default(0) // 受注金額（税抜・円）
+  amount      Int       @default(0) // 受注金額（税別・円）
   startDate   DateTime?
   dueDate     DateTime?
   siteUrl     String?
@@ -77,7 +77,7 @@ model InvoiceItem {
   invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   description String
   quantity    Int     @default(1)
-  unitPrice   Int     @default(0) // 税抜・円
+  unitPrice   Int     @default(0) // 税込・円
   sortOrder   Int     @default(0)
 }
 

@@ -91,16 +91,12 @@ export default async function SettingsPage() {
               className={inputClass}
             />
           </label>
-          <label className="block">
-            <span className="text-sm text-gray-600">支払期限（発行日から日数）</span>
-            <input
-              name="paymentTermDays"
-              type="number"
-              min={0}
-              defaultValue={settings.paymentTermDays}
-              className={inputClass}
-            />
-          </label>
+          <div className="block">
+            <span className="text-sm text-gray-600">支払期限</span>
+            <p className="mt-1 text-sm text-gray-500 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
+              請求書の支払期限は「発行月の翌月末日」で自動設定されます。
+            </p>
+          </div>
           <label className="block col-span-2">
             <span className="text-sm text-gray-600">請求書の備考（デフォルト）</span>
             <textarea

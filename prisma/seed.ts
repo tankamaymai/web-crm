@@ -22,6 +22,10 @@ function monthsAgo(date: Date, months: number, day: number): Date {
   );
 }
 
+function endOfNextMonth(date: Date): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 2, 0));
+}
+
 function invoiceNumberFor(date: Date, seq: number): string {
   const ym = date.toISOString().slice(0, 7).replace("-", "");
   return `INV-${ym}-${String(seq).padStart(3, "0")}`;
@@ -182,7 +186,7 @@ async function main() {
         projectId: maintenance.id,
         status: "PAID",
         issueDate: issue,
-        dueDate: addDays(issue, 30),
+        dueDate: endOfNextMonth(issue),
         taxRate: 10,
         paidAt: addDays(issue, 15),
         items: {
@@ -190,7 +194,7 @@ async function main() {
             {
               description: `サイト保守費用（${issue.getUTCMonth() + 1}月分）`,
               quantity: 1,
-              unitPrice: 30000,
+              unitPrice: 33000,
             },
           ],
         },
@@ -207,7 +211,7 @@ async function main() {
       projectId: renewal.id,
       status: "PAID",
       issueDate: depositIssue,
-      dueDate: addDays(depositIssue, 30),
+      dueDate: endOfNextMonth(depositIssue),
       taxRate: 10,
       paidAt: addDays(depositIssue, 20),
       items: {
@@ -215,7 +219,7 @@ async function main() {
           {
             description: "サイトリニューアル 着手金（50%）",
             quantity: 1,
-            unitPrice: 300000,
+            unitPrice: 330000,
           },
         ],
       },
@@ -230,14 +234,14 @@ async function main() {
       projectId: renewal.id,
       status: "SENT",
       issueDate: balanceIssue,
-      dueDate: addDays(balanceIssue, 30),
+      dueDate: endOfNextMonth(balanceIssue),
       taxRate: 10,
       items: {
         create: [
           {
             description: "サイトリニューアル 残金（50%）",
             quantity: 1,
-            unitPrice: 300000,
+            unitPrice: 330000,
           },
         ],
       },
@@ -255,7 +259,7 @@ async function main() {
       projectId: maintenance.id,
       status: "PAID",
       issueDate: thisMonthIssue,
-      dueDate: addDays(thisMonthIssue, 30),
+      dueDate: endOfNextMonth(thisMonthIssue),
       taxRate: 10,
       paidAt: addDays(thisMonthIssue, 1),
       items: {
@@ -263,7 +267,7 @@ async function main() {
           {
             description: `サイト保守費用（${thisMonthIssue.getUTCMonth() + 1}月分）`,
             quantity: 1,
-            unitPrice: 30000,
+            unitPrice: 33000,
           },
         ],
       },
