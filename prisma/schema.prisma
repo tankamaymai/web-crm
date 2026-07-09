@@ -5,6 +5,9 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // マイグレーションはプーラー(pgbouncer)経由だとadvisory lockが取れず
+  // P1002になるため、直接接続を使う（Neon統合が自動注入する変数）
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model Client {
