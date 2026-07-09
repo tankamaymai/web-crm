@@ -47,6 +47,7 @@ model Task {
   dueDate     DateTime?
   completed   Boolean   @default(false)
   completedAt DateTime?
+  priority    Int       @default(4) // 1(最高)〜4(なし)。Todoistのp1〜p4に相当
   sortOrder   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
