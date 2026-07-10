@@ -147,6 +147,7 @@ async function main() {
         title: "トップページのデザイン修正",
         projectId: corporate.id,
         dueDate: today,
+        priority: 2,
       },
       {
         title: "お問い合わせフォームの実装",
@@ -157,6 +158,7 @@ async function main() {
         title: "LPの修正フィードバック対応",
         projectId: lp.id,
         dueDate: addDays(today, -1),
+        priority: 1,
       },
       {
         title: "請求書の送付確認",
