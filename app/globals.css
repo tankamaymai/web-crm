@@ -1,8 +1,22 @@
 @import "tailwindcss";
 
 body {
-  background: #f5f6f8;
+  background: #f4f5f7;
   color: #1a1a2e;
   font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
     "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* フォーム要素のフォーカスを全体で統一する */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(2, 132, 199, 0.55);
+  outline-offset: 0;
+  border-color: transparent;
+}
+
+::selection {
+  background: rgba(2, 132, 199, 0.18);
 }

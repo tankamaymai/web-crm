@@ -16,14 +16,19 @@ const NAV_ITEMS = [
 export default function Sidebar() {
   const pathname = usePathname();
   return (
-    <aside className="w-56 shrink-0 bg-slate-900 text-slate-200 flex flex-col min-h-screen">
-      <div className="px-5 py-5 border-b border-slate-700">
-        <Link href="/" className="text-lg font-bold text-white">
-          Web CRM
-        </Link>
-        <p className="text-xs text-slate-400 mt-1">案件管理</p>
+    <aside className="flex min-h-screen w-56 shrink-0 flex-col bg-slate-900 text-slate-200">
+      <div className="flex items-center gap-2.5 px-5 py-5">
+        <span className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-sky-600 text-sm font-bold text-white">
+          W
+        </span>
+        <div>
+          <Link href="/" className="block text-base font-bold leading-tight text-white">
+            Web CRM
+          </Link>
+          <p className="text-[11px] text-slate-400">案件管理</p>
+        </div>
       </div>
-      <nav className="flex-1 py-3">
+      <nav className="flex-1 space-y-0.5 px-3 py-2">
         {NAV_ITEMS.map((item) => {
           const active =
             item.href === "/"
@@ -33,18 +38,24 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-5 py-2.5 text-sm transition-colors ${
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
                 active
-                  ? "bg-slate-700/70 text-white font-medium border-l-2 border-sky-400"
-                  : "hover:bg-slate-800 text-slate-300"
+                  ? "bg-sky-500/15 font-medium text-white"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
               }`}
             >
-              <span>{item.icon}</span>
+              <span className="text-base leading-none">{item.icon}</span>
               {item.label}
+              {active && (
+                <span className="ml-auto size-1.5 rounded-full bg-sky-400" />
+              )}
             </Link>
           );
         })}
       </nav>
+      <p className="px-5 pb-4 text-[11px] text-slate-500">
+        for Web制作フリーランス
+      </p>
     </aside>
   );
 }

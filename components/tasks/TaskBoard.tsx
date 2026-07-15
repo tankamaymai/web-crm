@@ -189,12 +189,16 @@ function TaskRow({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter") {
+            // IME変換中のEnterは無視し、Shift+Enterで保存する
+            if (e.nativeEvent.isComposing) return;
+            if (e.key === "Enter" && e.shiftKey) {
+              e.preventDefault();
               onUpdate(task, { title, dueDate: dueDate || null });
               setEditing(false);
             }
             if (e.key === "Escape") setEditing(false);
           }}
+          placeholder="Shift+Enterで保存"
           className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
         />
         <div className="flex items-center gap-2">
@@ -243,8 +247,10 @@ function TaskRow({
     <li
       ref={setNodeRef}
       style={style}
-      className={`group flex items-center gap-2 rounded-lg border bg-white px-2 py-2 ${
-        dragging ? "shadow-lg border-sky-300" : "border-gray-100 hover:border-gray-200"
+      className={`group flex items-center gap-2 rounded-lg border bg-white px-2 py-2.5 shadow-xs transition-colors ${
+        dragging
+          ? "shadow-lg border-sky-300"
+          : "border-gray-100 hover:border-gray-200 hover:bg-gray-50/70"
       }`}
     >
       {/* ドラッグハンドル */}
@@ -291,7 +297,11 @@ function TaskRow({
 
       {task.dueDate && (
         <span
-          className={`text-xs tabular-nums ${overdue ? "text-red-500 font-medium" : "text-gray-400"}`}
+          className={`rounded px-1.5 py-0.5 text-xs tabular-nums ${
+            overdue
+              ? "bg-red-50 font-medium text-red-600"
+              : "bg-gray-50 text-gray-500"
+          }`}
         >
           {formatShortDate(task.dueDate)}
         </span>
@@ -380,10 +390,15 @@ function QuickAdd({
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") submit();
+          // IME変換中のEnterは無視し、Shift+Enterで追加する
+          if (e.nativeEvent.isComposing) return;
+          if (e.key === "Enter" && e.shiftKey) {
+            e.preventDefault();
+            submit();
+          }
           if (e.key === "Escape") setOpen(false);
         }}
-        placeholder="タスク名を入力してEnter"
+        placeholder="タスク名を入力（Shift+Enterで追加）"
         className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
       />
       <div className="flex flex-wrap items-center gap-2">
@@ -460,13 +475,23 @@ function Section({
 
   return (
     <section>
-      <div className="mb-2 flex items-baseline gap-2 border-b border-gray-200 pb-1">
+      <div className="mb-2 flex items-center gap-2 border-b border-gray-200 pb-1.5">
         <h2
-          className={`text-sm font-bold ${section === "overdue" ? "text-red-600" : "text-gray-700"}`}
+          className={`text-sm font-bold ${section === "overdue" ? "text-red-600" : "text-gray-800"}`}
         >
           {SECTION_LABELS[section]}
         </h2>
-        <span className="text-xs text-gray-400">{tasks.length}</span>
+        {tasks.length > 0 && (
+          <span
+            className={`rounded-full px-2 py-0.5 text-[11px] font-medium tabular-nums ${
+              section === "overdue"
+                ? "bg-red-50 text-red-600"
+                : "bg-gray-100 text-gray-500"
+            }`}
+          >
+            {tasks.length}
+          </span>
+        )}
       </div>
       <SortableContext
         items={tasks.map((t) => t.id)}
