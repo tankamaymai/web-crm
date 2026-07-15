@@ -125,7 +125,7 @@ export default async function ProjectsPage({
               </span>
             </div>
             <table className="w-full text-sm">
-              <thead className="text-gray-500 text-left">
+              <thead className="text-left text-xs text-gray-400">
                 <tr>
                   <th className="px-4 py-2 font-medium">案件名</th>
                   <th className="px-4 py-2 font-medium">顧客</th>

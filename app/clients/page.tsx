@@ -20,7 +20,7 @@ export default async function ClientsPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 text-left">
+          <thead className="bg-gray-50 text-left text-xs text-gray-400">
             <tr>
               <th className="px-4 py-3 font-medium">顧客名</th>
               <th className="px-4 py-3 font-medium">会社名</th>

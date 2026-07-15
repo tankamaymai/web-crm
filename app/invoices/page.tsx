@@ -73,7 +73,7 @@ export default async function InvoicesPage({
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-gray-500 text-left">
+          <thead className="bg-gray-50 text-left text-xs text-gray-400">
             <tr>
               <th className="px-4 py-3 font-medium">請求書番号</th>
               <th className="px-4 py-3 font-medium">宛先</th>
