@@ -50,7 +50,7 @@ export default async function InvoiceDetailPage({
       <PageHeader
         title={`請求書 ${invoice.invoiceNumber}`}
         action={
-          <div className="flex gap-3 items-center">
+          <div className="flex flex-wrap gap-3 items-center">
             <a
               href={`/api/invoices/${invoice.id}/pdf`}
               className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
@@ -85,10 +85,10 @@ export default async function InvoiceDetailPage({
         }
       />
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <h2 className="font-bold">明細</h2>
               <div className="flex items-center gap-3 text-sm text-gray-500">
                 <InvoiceStatusBadge status={invoice.status} />
@@ -97,7 +97,8 @@ export default async function InvoiceDetailPage({
                 )}
               </div>
             </div>
-            <table className="w-full text-sm mb-4">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[520px] text-sm mb-4">
               <thead className="text-gray-500 text-left border-b border-gray-200">
                 <tr>
                   <th className="py-2 font-medium">品目</th>
@@ -174,16 +175,17 @@ export default async function InvoiceDetailPage({
                 </tr>
               </tfoot>
             </table>
+            </div>
 
             <form
               action={addInvoiceItem.bind(null, invoice.id)}
-              className="flex gap-2 border-t border-gray-100 pt-4"
+              className="flex flex-wrap gap-2 border-t border-gray-100 pt-4"
             >
               <input
                 name="description"
                 required
                 placeholder="品目を追加..."
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
               />
               <input
                 name="quantity"

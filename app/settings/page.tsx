@@ -16,8 +16,8 @@ export default async function SettingsPage() {
         ここで設定した内容が請求書PDFに印字されます。
       </p>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
-        <form action={updateSettings} className="grid grid-cols-2 gap-4">
-          <label className="block col-span-2">
+        <form action={updateSettings} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label className="block sm:col-span-2">
             <span className="text-sm text-gray-600">事業者名・屋号 *</span>
             <input
               name="businessName"
@@ -60,7 +60,7 @@ export default async function SettingsPage() {
               className={inputClass}
             />
           </label>
-          <label className="block col-span-2">
+          <label className="block sm:col-span-2">
             <span className="text-sm text-gray-600">
               適格請求書発行事業者 登録番号（インボイス）
             </span>
@@ -71,7 +71,7 @@ export default async function SettingsPage() {
               className={inputClass}
             />
           </label>
-          <label className="block col-span-2">
+          <label className="block sm:col-span-2">
             <span className="text-sm text-gray-600">振込先（銀行口座情報）</span>
             <textarea
               name="bankInfo"
@@ -97,7 +97,7 @@ export default async function SettingsPage() {
               請求書の支払期限は「発行月の翌月末日」で自動設定されます。
             </p>
           </div>
-          <label className="block col-span-2">
+          <label className="block sm:col-span-2">
             <span className="text-sm text-gray-600">請求書の備考（デフォルト）</span>
             <textarea
               name="invoiceNotes"
@@ -106,7 +106,7 @@ export default async function SettingsPage() {
               className={inputClass}
             />
           </label>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <button
               type="submit"
               className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"

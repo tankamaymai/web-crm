@@ -17,8 +17,8 @@ export default function ProjectForm({
   const inputClass =
     "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm";
   return (
-    <form action={action} className="grid grid-cols-2 gap-4">
-      <label className="block col-span-2">
+    <form action={action} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <label className="block sm:col-span-2">
         <span className="text-sm text-gray-600">案件名 *</span>
         <input name="title" required defaultValue={project?.title} className={inputClass} />
       </label>
@@ -93,7 +93,7 @@ export default function ProjectForm({
           className={inputClass}
         />
       </label>
-      <label className="block col-span-2">
+      <label className="block sm:col-span-2">
         <span className="text-sm text-gray-600">案件内容</span>
         <textarea
           name="description"
@@ -102,7 +102,7 @@ export default function ProjectForm({
           className={inputClass}
         />
       </label>
-      <label className="block col-span-2">
+      <label className="block sm:col-span-2">
         <span className="text-sm text-gray-600">メモ</span>
         <textarea
           name="notes"
@@ -111,7 +111,7 @@ export default function ProjectForm({
           className={inputClass}
         />
       </label>
-      <div className="col-span-2 flex gap-3">
+      <div className="flex gap-3 sm:col-span-2">
         <button
           type="submit"
           className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"

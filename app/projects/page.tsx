@@ -113,7 +113,7 @@ export default async function ProjectsPage({
             key={group.key}
             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
           >
-            <div className="flex items-baseline justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 bg-gray-50 border-b border-gray-200">
               <h2 className="font-bold text-gray-700">
                 {group.label}
                 <span className="ml-2 text-xs font-normal text-gray-400">
@@ -124,7 +124,8 @@ export default async function ProjectsPage({
                 受注金額合計 {formatYen(group.total)}
               </span>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
               <thead className="text-left text-xs text-gray-400">
                 <tr>
                   <th className="px-4 py-2 font-medium">案件名</th>
@@ -162,6 +163,7 @@ export default async function ProjectsPage({
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         ))}
       </div>

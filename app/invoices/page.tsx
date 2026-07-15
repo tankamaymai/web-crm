@@ -55,7 +55,7 @@ export default async function InvoicesPage({
         }
       />
 
-      <div className="flex gap-2 mb-4">
+      <div className="flex flex-wrap gap-2 mb-4">
         {FILTERS.map((f) => (
           <Link
             key={f.key}
@@ -71,8 +71,8 @@ export default async function InvoicesPage({
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <table className="w-full min-w-[900px] whitespace-nowrap text-sm">
           <thead className="bg-gray-50 text-left text-xs text-gray-400">
             <tr>
               <th className="px-4 py-3 font-medium">請求書番号</th>

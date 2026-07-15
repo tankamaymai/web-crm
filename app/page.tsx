@@ -239,7 +239,7 @@ export default async function DashboardPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">ダッシュボード</h1>
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-3">
         <StatCard
           label="今月の売上"
           value={formatYen(totalOf(issuedThisMonth))}
@@ -260,16 +260,16 @@ export default async function DashboardPage() {
 
       {/* 売上パイプライン: 見込み→進行中→請求済み→入金済み（すべて税込） */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
-        <div className="flex items-baseline justify-between mb-4">
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
           <h2 className="font-bold">売上パイプライン</h2>
-          <div className="text-right">
+          <div className="sm:text-right">
             <span className="text-sm text-gray-500 mr-2">着地見込み合計</span>
             <span className="text-2xl font-bold tabular-nums text-slate-800">
               {formatYen(pipelineTotal)}
             </span>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <PipelineStage
             label="見込み"
             value={formatYen(leadTotal)}
@@ -300,8 +300,8 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <h2 className="font-bold mb-3">月別売上（発行ベース・直近12ヶ月）</h2>
             <MonthlyChart data={monthlyData} series={chartSeries} />
@@ -331,11 +331,11 @@ export default async function DashboardPage() {
               {upcomingProjects.map((p) => (
                 <li
                   key={p.id}
-                  className="py-2.5 flex items-center gap-3 text-sm"
+                  className="py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
                 >
                   <Link
                     href={`/projects/${p.id}`}
-                    className="font-medium text-sky-700 hover:underline flex-1 min-w-0 truncate"
+                    className="font-medium text-sky-700 hover:underline min-w-0 basis-full truncate sm:basis-auto sm:flex-1"
                   >
                     {p.title}
                   </Link>
