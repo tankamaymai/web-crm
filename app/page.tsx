@@ -7,7 +7,10 @@ import { ACTIVE_PROJECT_STATUSES } from "@/lib/status";
 import { ProjectStatusBadge } from "@/components/StatusBadge";
 import DueDateLabel from "@/components/DueDateLabel";
 import TaskCheckbox from "@/components/TaskCheckbox";
-import MonthlyChart, { type MonthlyDatum } from "@/components/MonthlyChart";
+import MonthlyChart, {
+  type MonthlyDatum,
+  type SalesSeries,
+} from "@/components/MonthlyChart";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -84,7 +87,7 @@ export default async function DashboardPage() {
     // 累計売上の計算に全期間が必要（個人利用の件数規模のため全件取得でOK）
     prisma.invoice.findMany({
       where: { status: { in: ["SENT", "PAID"] } },
-      include: { items: true },
+      include: { items: true, project: { select: { title: true } } },
     }),
     prisma.project.count({
       where: { status: { in: ACTIVE_PROJECT_STATUSES } },
@@ -156,19 +159,81 @@ export default async function DashboardPage() {
   const paidTotal = totalOf(paidInvoices);
   const pipelineTotal = leadTotal + activeUnbilledTotal + unpaidTotal + paidTotal;
 
-  // 直近12ヶ月の月別売上（発行日基準）
-  const monthlyData: MonthlyDatum[] = [];
-  for (let i = -11; i <= 0; i++) {
-    const mStart = addMonths(thisMonth, i);
-    const mEnd = addMonths(thisMonth, i + 1);
-    const monthInvoices = salesInvoices.filter(
-      (inv) => inv.issueDate >= mStart && inv.issueDate < mEnd
+  // 直近12ヶ月の月別売上（発行日基準）。案件ごとに積み上げる。
+  const OTHER_LABEL = "その他";
+  const CHART_COLORS = [
+    "#2a78d6",
+    "#1baf7a",
+    "#eda100",
+    "#008300",
+    "#4a3aa7",
+    "#e34948",
+    "#e87ba4",
+    "#eb6834",
+  ];
+  const MAX_SERIES = 7; // 8色目以降は「その他」に畳む
+
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const mStart = addMonths(thisMonth, i - 11);
+    return {
+      start: mStart,
+      end: addMonths(thisMonth, i - 10),
+      label: `${mStart.getUTCFullYear() % 100}/${mStart.getUTCMonth() + 1}`,
+    };
+  });
+
+  // 案件タイトル × 月 の売上合計を作る
+  const byProject = new Map<string, number[]>();
+  for (const inv of salesInvoices) {
+    const monthIndex = months.findIndex(
+      (m) => inv.issueDate >= m.start && inv.issueDate < m.end
     );
-    monthlyData.push({
-      month: `${mStart.getUTCFullYear() % 100}/${mStart.getUTCMonth() + 1}`,
-      amount: totalOf(monthInvoices),
-    });
+    if (monthIndex < 0) continue;
+    const label = inv.project?.title ?? OTHER_LABEL;
+    const arr = byProject.get(label) ?? new Array(12).fill(0);
+    arr[monthIndex] += calcInvoiceTotals(
+      inv.items,
+      inv.taxRate,
+      inv.taxMode,
+      inv.issueDate
+    ).total;
+    byProject.set(label, arr);
   }
+
+  // 合計金額の大きい案件から色を割り当て、あふれた分は「その他」へ
+  const ranked = [...byProject.entries()]
+    .map(([label, arr]) => ({ label, arr, sum: arr.reduce((a, b) => a + b, 0) }))
+    .sort((a, b) => b.sum - a.sum);
+  const topProjects = ranked
+    .filter((r) => r.label !== OTHER_LABEL)
+    .slice(0, MAX_SERIES);
+  const folded = ranked.filter(
+    (r) => r.label === OTHER_LABEL || !topProjects.includes(r)
+  );
+  const otherArr = new Array(12).fill(0);
+  for (const r of folded) {
+    for (let i = 0; i < 12; i++) otherArr[i] += r.arr[i];
+  }
+
+  const chartSeries: SalesSeries[] = [
+    ...topProjects.map((r, i) => ({
+      key: `p${i}`,
+      label: r.label,
+      color: CHART_COLORS[i],
+    })),
+    ...(otherArr.some((v) => v > 0)
+      ? [{ key: "other", label: OTHER_LABEL, color: "#94a3b8" }]
+      : []),
+  ];
+
+  const monthlyData: MonthlyDatum[] = months.map((m, monthIndex) => {
+    const row: MonthlyDatum = { month: m.label };
+    topProjects.forEach((r, i) => {
+      row[`p${i}`] = r.arr[monthIndex];
+    });
+    if (otherArr.some((v) => v > 0)) row.other = otherArr[monthIndex];
+    return row;
+  });
 
   return (
     <div>
@@ -239,7 +304,7 @@ export default async function DashboardPage() {
         <div className="col-span-2 space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
             <h2 className="font-bold mb-3">月別売上（発行ベース・直近12ヶ月）</h2>
-            <MonthlyChart data={monthlyData} />
+            <MonthlyChart data={monthlyData} series={chartSeries} />
           </div>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
