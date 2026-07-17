@@ -13,7 +13,7 @@ export default async function SettingsPage() {
     <div>
       <PageHeader title="設定" />
       <p className="text-sm text-gray-500 mb-6 -mt-3">
-        ここで設定した内容が請求書PDFに印字されます。
+        事業者情報は請求書PDFに印字されます。月次売上目標はダッシュボードのゲージに反映されます。
       </p>
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
         <form action={updateSettings} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -88,6 +88,18 @@ export default async function SettingsPage() {
               type="number"
               min={0}
               defaultValue={settings.defaultTaxRate}
+              className={inputClass}
+            />
+          </label>
+          <label className="block">
+            <span className="text-sm text-gray-600">月次売上目標（税込・円）</span>
+            <input
+              name="monthlyGoal"
+              type="number"
+              min={0}
+              step={10000}
+              placeholder="500000"
+              defaultValue={settings.monthlyGoal || ""}
               className={inputClass}
             />
           </label>

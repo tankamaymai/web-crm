@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { toggleTask } from "@/app/actions/tasks";
+import { generateMonthlyInvoices } from "@/app/actions/invoices";
 import { calcInvoiceTotals } from "@/lib/invoice";
 import { getSettings } from "@/lib/settings";
 import { addMonths, formatYen, startOfMonth, todayJST } from "@/lib/dates";
@@ -11,6 +12,7 @@ import MonthlyChart, {
   type MonthlyDatum,
   type SalesSeries,
 } from "@/components/MonthlyChart";
+import GoalGauge from "@/components/GoalGauge";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -79,6 +81,7 @@ export default async function DashboardPage() {
     activeProjectCount,
     leadProjects,
     activeUnbilledProjects,
+    recurringUnbilled,
     todayTasks,
     upcomingProjects,
   ] = await Promise.all([
@@ -104,6 +107,16 @@ export default async function DashboardPage() {
         invoices: { none: {} },
       },
       select: { amount: true },
+    }),
+    // 月額案件のうち、今月分の請求書がまだ発行されていないもの
+    prisma.project.findMany({
+      where: {
+        recurring: true,
+        status: { notIn: ["COMPLETED", "CANCELLED"] },
+        invoices: { none: { issueDate: { gte: thisMonth, lt: nextMonth } } },
+      },
+      include: { client: true },
+      orderBy: { createdAt: "asc" },
     }),
     prisma.task.findMany({
       where: { completed: false, dueDate: { lte: today } },
@@ -158,6 +171,9 @@ export default async function DashboardPage() {
   const unpaidTotal = totalOf(unpaidInvoices);
   const paidTotal = totalOf(paidInvoices);
   const pipelineTotal = leadTotal + activeUnbilledTotal + unpaidTotal + paidTotal;
+
+  const thisMonthTotal = totalOf(issuedThisMonth);
+  const recurringUnbilledTotal = sumProjectsInclusive(recurringUnbilled);
 
   // 直近12ヶ月の月別売上（発行日基準）。案件ごとに積み上げる。
   const OTHER_LABEL = "その他";
@@ -239,10 +255,59 @@ export default async function DashboardPage() {
     <div>
       <h1 className="text-2xl font-bold mb-6">ダッシュボード</h1>
 
+      <GoalGauge
+        goal={settings.monthlyGoal}
+        achieved={thisMonthTotal}
+        potential={activeUnbilledTotal + recurringUnbilledTotal}
+        monthLabel={`${today.getUTCMonth() + 1}月`}
+      />
+
+      {/* 月額案件の請求リマインダー */}
+      {recurringUnbilled.length > 0 && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-bold text-amber-900">
+                🔁 今月分の月額請求書が未発行です（{recurringUnbilled.length}件）
+              </h2>
+              <ul className="mt-1.5 space-y-0.5 text-sm text-amber-800">
+                {recurringUnbilled.map((p) => (
+                  <li key={p.id}>
+                    <Link
+                      href={`/projects/${p.id}`}
+                      className="hover:underline"
+                    >
+                      {p.title}
+                    </Link>
+                    <span className="ml-2 tabular-nums">
+                      {formatYen(toInclusive(p.amount))}
+                    </span>
+                    <span className="ml-1 text-xs text-amber-600">
+                      / {p.client.name}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <form action={generateMonthlyInvoices}>
+              <button
+                type="submit"
+                className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700"
+              >
+                今月分をまとめて発行（{formatYen(recurringUnbilledTotal)}）
+              </button>
+            </form>
+          </div>
+          <p className="mt-2 text-xs text-amber-600">
+            下書きとして作成されます。内容を確認してから「発行済みにする」を押してください。
+          </p>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-3">
         <StatCard
           label="今月の売上"
-          value={formatYen(totalOf(issuedThisMonth))}
+          value={formatYen(thisMonthTotal)}
           sub={`${issuedThisMonth.length}件発行（発行ベース）`}
           accent="emerald"
         />

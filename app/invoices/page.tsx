@@ -5,6 +5,7 @@ import { formatDate, formatYen } from "@/lib/dates";
 import { INVOICE_STATUS_LABELS } from "@/lib/status";
 import PageHeader from "@/components/PageHeader";
 import { InvoiceStatusBadge } from "@/components/StatusBadge";
+import CelebrateButton from "@/components/CelebrateButton";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
@@ -137,12 +138,9 @@ export default async function InvoicesPage({
                         action={setInvoiceStatus.bind(null, inv.id, "PAID")}
                         className="inline"
                       >
-                        <button
-                          type="submit"
-                          className="text-xs rounded-lg bg-emerald-600 text-white px-2.5 py-1 hover:bg-emerald-700"
-                        >
+                        <CelebrateButton className="text-xs rounded-lg bg-emerald-600 text-white px-2.5 py-1 hover:bg-emerald-700">
                           入金済みにする
-                        </button>
+                        </CelebrateButton>
                       </form>
                     )}
                   </td>

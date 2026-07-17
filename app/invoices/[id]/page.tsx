@@ -10,6 +10,7 @@ import { calcInvoiceTotals, transitionalDeductionRate } from "@/lib/invoice";
 import { formatDate, formatYen, toDateInputValue } from "@/lib/dates";
 import PageHeader from "@/components/PageHeader";
 import { InvoiceStatusBadge } from "@/components/StatusBadge";
+import CelebrateButton from "@/components/CelebrateButton";
 import DeleteButton from "@/components/DeleteButton";
 import TaxModeSelect from "@/components/TaxModeSelect";
 import { notFound } from "next/navigation";
@@ -69,12 +70,9 @@ export default async function InvoiceDetailPage({
             )}
             {invoice.status === "SENT" && (
               <form action={setInvoiceStatus.bind(null, invoice.id, "PAID")}>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700"
-                >
+                <CelebrateButton className="rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700">
                   入金済みにする
-                </button>
+                </CelebrateButton>
               </form>
             )}
             <DeleteButton

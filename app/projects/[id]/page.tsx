@@ -96,9 +96,21 @@ export default async function ProjectDetailPage({
                 </dd>
               </div>
               <div>
-                <dt className="text-gray-500">受注金額（税別）</dt>
+                <dt className="text-gray-500">
+                  受注金額（税別）
+                  {project.recurring && (
+                    <span className="ml-1.5 inline-block rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                      🔁 月額
+                    </span>
+                  )}
+                </dt>
                 <dd className="mt-0.5 font-medium tabular-nums">
                   {formatYen(project.amount)}
+                  {project.recurring && (
+                    <span className="ml-1 text-xs font-normal text-gray-400">
+                      / 月
+                    </span>
+                  )}
                 </dd>
               </div>
               <div>

@@ -64,6 +64,15 @@ export default function ProjectForm({
           defaultValue={project?.amount ?? 0}
           className={inputClass}
         />
+        <span className="mt-1.5 flex items-center gap-2 text-sm text-gray-600">
+          <input
+            name="recurring"
+            type="checkbox"
+            defaultChecked={project?.recurring ?? false}
+            className="size-4 rounded accent-sky-600"
+          />
+          月額案件（毎月この金額で請求書を発行）
+        </span>
       </label>
       <label className="block">
         <span className="text-sm text-gray-600">サイトURL</span>

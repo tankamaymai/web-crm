@@ -145,6 +145,11 @@ export default async function ProjectsPage({
                       >
                         {p.title}
                       </Link>
+                      {p.recurring && (
+                        <span className="ml-1.5 inline-block rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                          🔁 月額
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{p.client.name}</td>
                     <td className="px-4 py-3">
