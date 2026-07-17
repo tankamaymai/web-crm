@@ -18,8 +18,8 @@ export default async function ClientsPage() {
     <div>
       <PageHeader title="顧客" />
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-        <table className="w-full text-sm">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto mb-8">
+        <table className="w-full min-w-[720px] whitespace-nowrap text-sm">
           <thead className="bg-gray-50 text-left text-xs text-gray-400">
             <tr>
               <th className="px-4 py-3 font-medium">顧客名</th>
@@ -75,7 +75,7 @@ export default async function ClientsPage() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
         <h2 className="font-bold mb-4">新規顧客を登録</h2>
-        <form action={createClient} className="grid grid-cols-2 gap-4">
+        <form action={createClient} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="text-sm text-gray-600">顧客名 *</span>
             <input
@@ -106,13 +106,13 @@ export default async function ClientsPage() {
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
           </label>
-          <label className="block col-span-2">
+          <label className="block sm:col-span-2">
             <span className="text-sm text-gray-600">
               消費税の計算方法（この顧客への請求書のデフォルト）
             </span>
             <TaxModeSelect />
           </label>
-          <label className="block col-span-2">
+          <label className="block sm:col-span-2">
             <span className="text-sm text-gray-600">メモ</span>
             <textarea
               name="notes"
@@ -120,7 +120,7 @@ export default async function ClientsPage() {
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
           </label>
-          <div className="col-span-2">
+          <div className="sm:col-span-2">
             <button
               type="submit"
               className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"

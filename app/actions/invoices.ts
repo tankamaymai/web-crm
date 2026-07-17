@@ -1,7 +1,13 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { endOfNextMonth, parseDateInput, todayJST } from "@/lib/dates";
+import {
+  addMonths,
+  endOfNextMonth,
+  parseDateInput,
+  startOfMonth,
+  todayJST,
+} from "@/lib/dates";
 import { nextInvoiceNumber, TAX_MODES } from "@/lib/invoice";
 import { getSettings } from "@/lib/settings";
 import { revalidatePath } from "next/cache";
@@ -48,6 +54,56 @@ export async function createInvoiceFromProject(projectId: string) {
   });
   revalidateInvoicePages(invoice.id);
   redirect(`/invoices/${invoice.id}`);
+}
+
+/**
+ * 月額案件のうち今月分の請求書がまだない案件について、まとめてドラフトを作成する。
+ * ダッシュボードの「今月分をまとめて発行」ボタンから呼ばれる。
+ */
+export async function generateMonthlyInvoices() {
+  const settings = await getSettings();
+  const today = todayJST();
+  const monthStart = startOfMonth(today);
+  const nextMonth = addMonths(monthStart, 1);
+
+  const targets = await prisma.project.findMany({
+    where: {
+      recurring: true,
+      status: { notIn: ["COMPLETED", "CANCELLED"] },
+      invoices: { none: { issueDate: { gte: monthStart, lt: nextMonth } } },
+    },
+    include: { client: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  for (const project of targets) {
+    await prisma.invoice.create({
+      data: {
+        invoiceNumber: await nextInvoiceNumber(),
+        clientId: project.clientId,
+        projectId: project.id,
+        issueDate: today,
+        dueDate: endOfNextMonth(today),
+        taxRate: settings.defaultTaxRate,
+        taxMode: project.client.taxMode,
+        notes: settings.invoiceNotes,
+        items: {
+          create: [
+            {
+              description: `${project.title}（${today.getUTCMonth() + 1}月分）`,
+              quantity: 1,
+              // 案件の受注金額は税別。請求書は税込で保持するため税込に換算する
+              unitPrice: Math.round(
+                (project.amount * (100 + settings.defaultTaxRate)) / 100
+              ),
+            },
+          ],
+        },
+      },
+    });
+  }
+  revalidateInvoicePages();
+  redirect("/invoices?status=DRAFT");
 }
 
 export async function updateInvoice(id: string, formData: FormData) {

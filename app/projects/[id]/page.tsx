@@ -35,7 +35,7 @@ export default async function ProjectDetailPage({
       <PageHeader
         title={project.title}
         action={
-          <div className="flex gap-3 items-center">
+          <div className="flex flex-wrap gap-3 items-center">
             <form action={createInvoiceFromProject.bind(null, project.id)}>
               <button
                 type="submit"
@@ -58,10 +58,10 @@ export default async function ProjectDetailPage({
         }
       />
 
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-gray-500">顧客</dt>
                 <dd className="mt-0.5 font-medium">
@@ -96,9 +96,21 @@ export default async function ProjectDetailPage({
                 </dd>
               </div>
               <div>
-                <dt className="text-gray-500">受注金額（税別）</dt>
+                <dt className="text-gray-500">
+                  受注金額（税別）
+                  {project.recurring && (
+                    <span className="ml-1.5 inline-block rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                      🔁 月額
+                    </span>
+                  )}
+                </dt>
                 <dd className="mt-0.5 font-medium tabular-nums">
                   {formatYen(project.amount)}
+                  {project.recurring && (
+                    <span className="ml-1 text-xs font-normal text-gray-400">
+                      / 月
+                    </span>
+                  )}
                 </dd>
               </div>
               <div>
@@ -119,7 +131,7 @@ export default async function ProjectDetailPage({
                 </dd>
               </div>
               {project.description && (
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <dt className="text-gray-500">案件内容</dt>
                   <dd className="mt-0.5 whitespace-pre-wrap">
                     {project.description}
@@ -127,7 +139,7 @@ export default async function ProjectDetailPage({
                 </div>
               )}
               {project.notes && (
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <dt className="text-gray-500">メモ</dt>
                   <dd className="mt-0.5 whitespace-pre-wrap">{project.notes}</dd>
                 </div>
@@ -166,13 +178,13 @@ export default async function ProjectDetailPage({
                 </li>
               ))}
             </ul>
-            <form action={createTask} className="flex gap-2">
+            <form action={createTask} className="flex flex-wrap gap-2">
               <input type="hidden" name="projectId" value={project.id} />
               <input
                 name="title"
                 required
                 placeholder="タスクを追加..."
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
               />
               <input
                 name="dueDate"

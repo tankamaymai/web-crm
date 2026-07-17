@@ -11,6 +11,7 @@ function projectData(formData: FormData) {
     clientId: formData.get("clientId") as string,
     status: formData.get("status") as string,
     amount: parseInt(formData.get("amount") as string, 10) || 0,
+    recurring: formData.get("recurring") === "on",
     startDate: parseDateInput(formData.get("startDate") as string),
     dueDate: parseDateInput(formData.get("dueDate") as string),
     siteUrl: (formData.get("siteUrl") as string) || null,

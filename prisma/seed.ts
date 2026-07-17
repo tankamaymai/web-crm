@@ -53,6 +53,7 @@ async function main() {
       // インボイス登録済みの場合のみ設定画面で登録番号を入力する
       bankInfo: "サンプル銀行 渋谷支店\n普通 1234567\nヤマダ タロウ",
       defaultTaxRate: 10,
+      monthlyGoal: 500000,
       paymentTermDays: 30,
     },
   });
@@ -125,6 +126,7 @@ async function main() {
       clientId: tanaka.id,
       status: "IN_PROGRESS",
       amount: 30000,
+      recurring: true,
       startDate: monthsAgo(today, 6, 1),
       description: "月額保守契約。毎月末請求。",
     },

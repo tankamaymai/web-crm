@@ -30,7 +30,8 @@ model Project {
   clientId    String
   client      Client    @relation(fields: [clientId], references: [id])
   status      String    @default("LEAD") // LEAD, IN_PROGRESS, REVIEW, DELIVERED, COMPLETED, CANCELLED
-  amount      Int       @default(0) // 受注金額（税別・円）
+  amount      Int       @default(0) // 受注金額（税別・円）。recurring の場合は毎月の請求額
+  recurring   Boolean   @default(false) // 月額案件（毎月請求書を発行する）
   startDate   DateTime?
   dueDate     DateTime?
   siteUrl     String?
@@ -95,6 +96,7 @@ model Settings {
   registrationNumber String? // 適格請求書発行事業者登録番号（T+13桁）
   bankInfo           String? // 振込先情報
   defaultTaxRate     Int     @default(10)
+  monthlyGoal        Int     @default(0) // 月次売上目標（税込・円）。0なら未設定
   paymentTermDays    Int     @default(30) // 支払期限（発行日からの日数）
   invoiceNotes       String? // 請求書の備考デフォルト
 }
