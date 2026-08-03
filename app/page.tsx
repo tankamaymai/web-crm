@@ -90,21 +90,23 @@ export default async function DashboardPage() {
     // 累計売上の計算に全期間が必要（個人利用の件数規模のため全件取得でOK）
     prisma.invoice.findMany({
       where: { status: { in: ["SENT", "PAID"] } },
-      include: { items: true, project: { select: { title: true } } },
+      include: {
+        items: { include: { project: { select: { title: true } } } },
+      },
     }),
     prisma.project.count({
       where: { status: { in: ACTIVE_PROJECT_STATUSES } },
     }),
-    // 見込み案件（未請求）: 請求書を1件も持たない LEAD 案件
+    // 見込み案件（未請求）: 請求明細を1件も持たない LEAD 案件
     prisma.project.findMany({
-      where: { status: "LEAD", invoices: { none: {} } },
+      where: { status: "LEAD", invoiceItems: { none: {} } },
       select: { amount: true },
     }),
-    // 進行中案件（未請求）: 請求書を1件も持たない進行中系案件
+    // 進行中案件（未請求）: 請求明細を1件も持たない進行中系案件
     prisma.project.findMany({
       where: {
         status: { in: ["IN_PROGRESS", "REVIEW", "DELIVERED"] },
-        invoices: { none: {} },
+        invoiceItems: { none: {} },
       },
       select: { amount: true },
     }),
@@ -113,7 +115,9 @@ export default async function DashboardPage() {
       where: {
         recurring: true,
         status: { notIn: ["COMPLETED", "CANCELLED"] },
-        invoices: { none: { issueDate: { gte: thisMonth, lt: nextMonth } } },
+        invoiceItems: {
+          none: { invoice: { issueDate: { gte: thisMonth, lt: nextMonth } } },
+        },
       },
       include: { client: true },
       orderBy: { createdAt: "asc" },
@@ -198,22 +202,45 @@ export default async function DashboardPage() {
     };
   });
 
-  // 案件タイトル × 月 の売上合計を作る
+  // 案件タイトル × 月 の売上合計を作る。
+  // 1枚の請求書に複数案件の明細が載るため、明細ごとに案件へ割り当てる。
+  // インボイス調整で請求合計は明細の単純合計とずれるので、比例配分して
+  // 積み上げの合計が請求合計と必ず一致するようにする。
   const byProject = new Map<string, number[]>();
+  const addTo = (label: string, monthIndex: number, amount: number) => {
+    const arr = byProject.get(label) ?? new Array(12).fill(0);
+    arr[monthIndex] += amount;
+    byProject.set(label, arr);
+  };
+
   for (const inv of salesInvoices) {
     const monthIndex = months.findIndex(
       (m) => inv.issueDate >= m.start && inv.issueDate < m.end
     );
     if (monthIndex < 0) continue;
-    const label = inv.project?.title ?? OTHER_LABEL;
-    const arr = byProject.get(label) ?? new Array(12).fill(0);
-    arr[monthIndex] += calcInvoiceTotals(
+    const invoiceTotal = calcInvoiceTotals(
       inv.items,
       inv.taxRate,
       inv.taxMode,
       inv.issueDate
     ).total;
-    byProject.set(label, arr);
+    const gross = inv.items.reduce(
+      (sum, item) => sum + item.quantity * item.unitPrice,
+      0
+    );
+    if (gross <= 0) continue;
+    let allocated = 0;
+    inv.items.forEach((item, i) => {
+      // 端数は最後の明細に寄せて合計を合わせる
+      const amount =
+        i === inv.items.length - 1
+          ? invoiceTotal - allocated
+          : Math.round(
+              (invoiceTotal * item.quantity * item.unitPrice) / gross
+            );
+      allocated += amount;
+      addTo(item.project?.title ?? OTHER_LABEL, monthIndex, amount);
+    });
   }
 
   // 合計金額の大きい案件から色を割り当て、あふれた分は「その他」へ

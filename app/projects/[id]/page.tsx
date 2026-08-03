@@ -25,10 +25,16 @@ export default async function ProjectDetailPage({
     include: {
       client: true,
       tasks: { orderBy: [{ completed: "asc" }, { dueDate: "asc" }] },
-      invoices: { orderBy: { issueDate: "desc" }, include: { items: true } },
     },
   });
   if (!project) notFound();
+
+  // この案件の明細を含む請求書（1枚に複数案件がまとまっている場合もある）
+  const invoices = await prisma.invoice.findMany({
+    where: { items: { some: { projectId: id } } },
+    orderBy: { issueDate: "desc" },
+    include: { items: true, _count: { select: { items: true } } },
+  });
 
   return (
     <div>
@@ -205,18 +211,27 @@ export default async function ProjectDetailPage({
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="font-bold mb-4">この案件の請求書</h2>
             <ul className="space-y-3">
-              {project.invoices.length === 0 && (
+              {invoices.length === 0 && (
                 <li className="text-sm text-gray-400">
                   まだ請求書はありません。「請求書を発行」で作成できます。
                 </li>
               )}
-              {project.invoices.map((inv) => {
+              {invoices.map((inv) => {
                 const { total } = calcInvoiceTotals(
                   inv.items,
                   inv.taxRate,
                   inv.taxMode,
                   inv.issueDate
                 );
+                // この案件ぶんの明細だけの金額（他案件と合算された請求書の場合に使う）
+                const projectItems = inv.items.filter(
+                  (item) => item.projectId === id
+                );
+                const projectAmount = projectItems.reduce(
+                  (sum, item) => sum + item.quantity * item.unitPrice,
+                  0
+                );
+                const combined = projectItems.length < inv.items.length;
                 return (
                   <li key={inv.id} className="text-sm">
                     <Link
@@ -230,6 +245,14 @@ export default async function ProjectDetailPage({
                       <span className="tabular-nums">{formatYen(total)}</span>
                       <InvoiceStatusBadge status={inv.status} />
                     </div>
+                    {combined && (
+                      <p className="mt-0.5 text-xs text-gray-400">
+                        他案件と合算 / この案件ぶん{" "}
+                        <span className="tabular-nums">
+                          {formatYen(projectAmount)}
+                        </span>
+                      </p>
+                    )}
                   </li>
                 );
               })}

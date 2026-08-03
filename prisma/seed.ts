@@ -187,7 +187,6 @@ async function main() {
       data: {
         invoiceNumber: invoiceNumberFor(issue, 1),
         clientId: tanaka.id,
-        projectId: maintenance.id,
         status: "PAID",
         issueDate: issue,
         dueDate: endOfNextMonth(issue),
@@ -197,6 +196,7 @@ async function main() {
           create: [
             {
               description: `サイト保守費用（${issue.getUTCMonth() + 1}月分）`,
+              projectId: maintenance.id,
               quantity: 1,
               unitPrice: 33000,
             },
@@ -212,7 +212,6 @@ async function main() {
     data: {
       invoiceNumber: invoiceNumberFor(depositIssue, 2),
       clientId: suzuki.id,
-      projectId: renewal.id,
       status: "PAID",
       issueDate: depositIssue,
       dueDate: endOfNextMonth(depositIssue),
@@ -222,6 +221,7 @@ async function main() {
         create: [
           {
             description: "サイトリニューアル 着手金（50%）",
+            projectId: renewal.id,
             quantity: 1,
             unitPrice: 330000,
           },
@@ -235,7 +235,6 @@ async function main() {
     data: {
       invoiceNumber: invoiceNumberFor(balanceIssue, 2),
       clientId: suzuki.id,
-      projectId: renewal.id,
       status: "SENT",
       issueDate: balanceIssue,
       dueDate: endOfNextMonth(balanceIssue),
@@ -244,6 +243,7 @@ async function main() {
         create: [
           {
             description: "サイトリニューアル 残金（50%）",
+            projectId: renewal.id,
             quantity: 1,
             unitPrice: 330000,
           },
@@ -260,7 +260,6 @@ async function main() {
     data: {
       invoiceNumber: invoiceNumberFor(thisMonthIssue, 1),
       clientId: tanaka.id,
-      projectId: maintenance.id,
       status: "PAID",
       issueDate: thisMonthIssue,
       dueDate: endOfNextMonth(thisMonthIssue),
@@ -270,6 +269,7 @@ async function main() {
         create: [
           {
             description: `サイト保守費用（${thisMonthIssue.getUTCMonth() + 1}月分）`,
+            projectId: maintenance.id,
             quantity: 1,
             unitPrice: 33000,
           },

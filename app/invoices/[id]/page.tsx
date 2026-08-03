@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import {
   addInvoiceItem,
+  addProjectsToInvoice,
   deleteInvoice,
   deleteInvoiceItem,
   setInvoiceStatus,
@@ -28,11 +29,33 @@ export default async function InvoiceDetailPage({
     where: { id },
     include: {
       client: true,
-      project: true,
-      items: { orderBy: { sortOrder: "asc" } },
+      items: {
+        orderBy: { sortOrder: "asc" },
+        include: { project: { select: { id: true, title: true } } },
+      },
     },
   });
   if (!invoice) notFound();
+
+  // 宛先顧客の案件（明細の紐付け先候補）
+  const clientProjects = await prisma.project.findMany({
+    where: { clientId: invoice.clientId, status: { not: "CANCELLED" } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, title: true, amount: true },
+  });
+  const linkedProjectIds = new Set(
+    invoice.items.map((item) => item.projectId).filter(Boolean)
+  );
+  const linkedProjects = [
+    ...new Map(
+      invoice.items
+        .filter((item) => item.project)
+        .map((item) => [item.project!.id, item.project!])
+    ).values(),
+  ];
+  const addableProjects = clientProjects.filter(
+    (p) => !linkedProjectIds.has(p.id)
+  );
 
   const { subtotal, taxAmount, adjustment, total } = calcInvoiceTotals(
     invoice.items,
@@ -109,7 +132,17 @@ export default async function InvoiceDetailPage({
               <tbody className="divide-y divide-gray-100">
                 {invoice.items.map((item) => (
                   <tr key={item.id}>
-                    <td className="py-2.5">{item.description}</td>
+                    <td className="py-2.5">
+                      <span className="block">{item.description}</span>
+                      {item.project && (
+                        <Link
+                          href={`/projects/${item.project.id}`}
+                          className="mt-1 inline-block max-w-full truncate rounded bg-gray-100 px-1.5 py-0.5 align-top text-xs text-gray-500 hover:text-sky-600"
+                        >
+                          {item.project.title}
+                        </Link>
+                      )}
+                    </td>
                     <td className="py-2.5 text-right tabular-nums">
                       {item.quantity}
                     </td>
@@ -175,37 +208,93 @@ export default async function InvoiceDetailPage({
             </table>
             </div>
 
-            <form
-              action={addInvoiceItem.bind(null, invoice.id)}
-              className="flex flex-wrap gap-2 border-t border-gray-100 pt-4"
-            >
-              <input
-                name="description"
-                required
-                placeholder="品目を追加..."
-                className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
-              <input
-                name="quantity"
-                type="number"
-                min={1}
-                defaultValue={1}
-                className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
-              <input
-                name="unitPrice"
-                type="number"
-                min={0}
-                placeholder="単価（税込）"
-                className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              />
-              <button
-                type="submit"
-                className="rounded-lg bg-slate-800 text-white px-4 py-2 text-sm hover:bg-slate-700"
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <form
+                action={addInvoiceItem.bind(null, invoice.id)}
+                className="flex flex-wrap gap-2"
               >
-                追加
-              </button>
-            </form>
+                <input
+                  name="description"
+                  required
+                  placeholder="品目を追加..."
+                  className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+                <select
+                  name="itemProjectId"
+                  defaultValue=""
+                  className="max-w-44 rounded-lg border border-gray-300 px-2 py-2 text-sm text-gray-600"
+                  aria-label="紐付ける案件"
+                >
+                  <option value="">案件なし</option>
+                  {clientProjects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.title}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  name="quantity"
+                  type="number"
+                  min={1}
+                  defaultValue={1}
+                  className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+                <input
+                  name="unitPrice"
+                  type="number"
+                  min={0}
+                  placeholder="単価（税込）"
+                  className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+                <button
+                  type="submit"
+                  className="rounded-lg bg-slate-800 text-white px-4 py-2 text-sm hover:bg-slate-700"
+                >
+                  追加
+                </button>
+              </form>
+
+              {addableProjects.length > 0 && (
+                <form
+                  action={addProjectsToInvoice.bind(null, invoice.id)}
+                  className="rounded-lg border border-sky-200 bg-sky-50/60 p-3"
+                >
+                  <p className="mb-2 text-sm font-medium text-sky-900">
+                    この顧客の他の案件をまとめて明細に追加
+                  </p>
+                  <ul className="mb-2 space-y-1">
+                    {addableProjects.map((p) => (
+                      <li key={p.id}>
+                        <label className="flex cursor-pointer items-center gap-2 rounded px-2 py-1 text-sm hover:bg-white/70">
+                          <input
+                            type="checkbox"
+                            name="projectIds"
+                            value={p.id}
+                            className="size-4 accent-sky-600"
+                          />
+                          <span className="min-w-0 flex-1 truncate">
+                            {p.title}
+                          </span>
+                          <span className="tabular-nums text-gray-600">
+                            {formatYen(
+                              Math.round(
+                                (p.amount * (100 + invoice.taxRate)) / 100
+                              )
+                            )}
+                          </span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="submit"
+                    className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700"
+                  >
+                    選んだ案件を明細に追加
+                  </button>
+                </form>
+              )}
+            </div>
           </div>
         </div>
 
@@ -220,16 +309,26 @@ export default async function InvoiceDetailPage({
                   {invoice.client.company && ` / ${invoice.client.company}`}
                 </dd>
               </div>
-              {invoice.project && (
+              {linkedProjects.length > 0 && (
                 <div>
-                  <dt className="text-gray-500">案件</dt>
-                  <dd>
-                    <Link
-                      href={`/projects/${invoice.project.id}`}
-                      className="text-sky-700 hover:underline"
-                    >
-                      {invoice.project.title}
-                    </Link>
+                  <dt className="text-gray-500">
+                    関連案件
+                    {linkedProjects.length > 1 && (
+                      <span className="ml-1.5 rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                        {linkedProjects.length}件をまとめて請求
+                      </span>
+                    )}
+                  </dt>
+                  <dd className="mt-0.5 space-y-0.5">
+                    {linkedProjects.map((p) => (
+                      <Link
+                        key={p.id}
+                        href={`/projects/${p.id}`}
+                        className="block text-sky-700 hover:underline"
+                      >
+                        {p.title}
+                      </Link>
+                    ))}
                   </dd>
                 </div>
               )}
