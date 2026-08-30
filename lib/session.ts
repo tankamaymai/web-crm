@@ -8,7 +8,8 @@ const encoder = new TextEncoder();
 
 /** ログインパスワード（未設定なら null = 未セットアップ） */
 export function getAppPassword(): string | null {
-  const value = process.env.APP_PASSWORD;
+  // 貼り付け時に混入しがちな前後の空白・改行は無視する
+  const value = process.env.APP_PASSWORD?.trim();
   return value && value.length > 0 ? value : null;
 }
 

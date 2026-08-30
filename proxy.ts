@@ -10,10 +10,12 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const password = getAppPassword();
 
-  // APP_PASSWORD 未設定のときは、セットアップ案内以外を一切表示しない
+  // APP_PASSWORD 未設定のときは、セットアップ案内以外を一切表示しない。
+  // rewrite ではなく redirect にして、URL を /setup に合わせる
+  // （クライアント側が pathname を見てナビゲーションを出し分けるため）
   if (!password) {
     if (pathname === "/setup") return NextResponse.next();
-    return NextResponse.rewrite(new URL("/setup", request.url));
+    return NextResponse.redirect(new URL("/setup", request.url));
   }
 
   const loggedIn = await verifySessionToken(
