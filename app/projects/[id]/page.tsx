@@ -9,6 +9,10 @@ import { InvoiceStatusBadge, ProjectStatusBadge } from "@/components/StatusBadge
 import DueDateLabel from "@/components/DueDateLabel";
 import DeleteButton from "@/components/DeleteButton";
 import TaskCheckbox from "@/components/TaskCheckbox";
+import SiteCredentials, {
+  type CredentialDto,
+} from "@/components/SiteCredentials";
+import ProjectNotes, { type NoteDto } from "@/components/ProjectNotes";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -25,9 +29,26 @@ export default async function ProjectDetailPage({
     include: {
       client: true,
       tasks: { orderBy: [{ completed: "asc" }, { dueDate: "asc" }] },
+      credentials: { orderBy: { sortOrder: "asc" } },
+      checkNotes: { orderBy: { createdAt: "desc" } },
     },
   });
   if (!project) notFound();
+
+  const credentials: CredentialDto[] = project.credentials.map((c) => ({
+    id: c.id,
+    label: c.label,
+    url: c.url,
+    loginId: c.loginId,
+    password: c.password,
+    note: c.note,
+  }));
+  const checkNotes: NoteDto[] = project.checkNotes.map((n) => ({
+    id: n.id,
+    body: n.body,
+    resolved: n.resolved,
+    createdAt: `${n.createdAt.getMonth() + 1}/${n.createdAt.getDate()}`,
+  }));
 
   // この案件の明細を含む請求書（1枚に複数案件がまとまっている場合もある）
   const invoices = await prisma.invoice.findMany({
@@ -152,6 +173,10 @@ export default async function ProjectDetailPage({
               )}
             </dl>
           </div>
+
+          <SiteCredentials projectId={project.id} credentials={credentials} />
+
+          <ProjectNotes projectId={project.id} notes={checkNotes} />
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <h2 className="font-bold mb-4">タスク</h2>

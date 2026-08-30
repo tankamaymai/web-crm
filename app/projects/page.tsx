@@ -63,11 +63,32 @@ export default async function ProjectsPage({
         ? { status: { in: ACTIVE_PROJECT_STATUSES } }
         : { status };
 
-  const projects = await prisma.project.findMany({
-    where,
-    include: { client: true },
-    orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { createdAt: "desc" }],
-  });
+  const [projects, pendingNoteCounts, credentialCounts] = await Promise.all([
+    prisma.project.findMany({
+      where,
+      include: { client: true },
+      orderBy: [
+        { dueDate: { sort: "asc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
+    }),
+    prisma.projectNote.groupBy({
+      by: ["projectId"],
+      where: { resolved: false },
+      _count: { _all: true },
+    }),
+    prisma.siteCredential.groupBy({
+      by: ["projectId"],
+      _count: { _all: true },
+    }),
+  ]);
+
+  const pendingNotesByProject = new Map(
+    pendingNoteCounts.map((row) => [row.projectId, row._count._all])
+  );
+  const credentialsByProject = new Map(
+    credentialCounts.map((row) => [row.projectId, row._count._all])
+  );
 
   const monthGroups = groupByMonth(projects);
 
@@ -148,6 +169,19 @@ export default async function ProjectsPage({
                       {p.recurring && (
                         <span className="ml-1.5 inline-block rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
                           🔁 月額
+                        </span>
+                      )}
+                      {(credentialsByProject.get(p.id) ?? 0) > 0 && (
+                        <span
+                          title="サイト情報あり"
+                          className="ml-1.5 inline-block text-xs"
+                        >
+                          🔑
+                        </span>
+                      )}
+                      {(pendingNotesByProject.get(p.id) ?? 0) > 0 && (
+                        <span className="ml-1.5 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                          💬 確認 {pendingNotesByProject.get(p.id)}
                         </span>
                       )}
                     </td>

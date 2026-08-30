@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 import {
   addMonths,
   endOfNextMonth,
@@ -21,6 +22,7 @@ function revalidateInvoicePages(id?: string) {
 
 /** 案件からワンクリックで請求書を作成する */
 export async function createInvoiceFromProject(projectId: string) {
+  await requireAuth();
   const project = await prisma.project.findUniqueOrThrow({
     where: { id: projectId },
     include: { client: true },
@@ -61,6 +63,7 @@ export async function createInvoiceFromProject(projectId: string) {
  * 行ごとに案件を紐付けられる（1顧客の複数案件を1枚にまとめられる）。
  */
 export async function createInvoice(formData: FormData) {
+  await requireAuth();
   const clientId = (formData.get("clientId") as string) || "";
   if (!clientId) return;
   const settings = await getSettings();
@@ -113,6 +116,7 @@ export async function createInvoice(formData: FormData) {
  * ダッシュボードの「今月分をまとめて発行」ボタンから呼ばれる。
  */
 export async function generateMonthlyInvoices() {
+  await requireAuth();
   const settings = await getSettings();
   const today = todayJST();
   const monthStart = startOfMonth(today);
@@ -161,6 +165,7 @@ export async function generateMonthlyInvoices() {
 }
 
 export async function updateInvoice(id: string, formData: FormData) {
+  await requireAuth();
   const taxMode = formData.get("taxMode") as string;
   await prisma.invoice.update({
     where: { id },
@@ -178,6 +183,7 @@ export async function updateInvoice(id: string, formData: FormData) {
 }
 
 export async function setInvoiceStatus(id: string, status: string) {
+  await requireAuth();
   await prisma.invoice.update({
     where: { id },
     data: {
@@ -189,12 +195,14 @@ export async function setInvoiceStatus(id: string, status: string) {
 }
 
 export async function deleteInvoice(id: string) {
+  await requireAuth();
   await prisma.invoice.delete({ where: { id } });
   revalidateInvoicePages();
   redirect("/invoices");
 }
 
 export async function addInvoiceItem(invoiceId: string, formData: FormData) {
+  await requireAuth();
   const description = ((formData.get("description") as string) || "").trim();
   if (!description) return;
   const last = await prisma.invoiceItem.findFirst({
@@ -223,6 +231,7 @@ export async function addProjectsToInvoice(
   invoiceId: string,
   formData: FormData
 ) {
+  await requireAuth();
   const projectIds = formData.getAll("projectIds") as string[];
   if (projectIds.length === 0) return;
   const [invoice, projects, last] = await Promise.all([
@@ -253,6 +262,7 @@ export async function addProjectsToInvoice(
 }
 
 export async function deleteInvoiceItem(id: string) {
+  await requireAuth();
   const item = await prisma.invoiceItem.delete({ where: { id } });
   revalidateInvoicePages(item.invoiceId);
   revalidatePath("/projects");

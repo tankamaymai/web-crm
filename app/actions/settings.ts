@@ -1,9 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
 
 export async function updateSettings(formData: FormData) {
+  await requireAuth();
   const data = {
     businessName: (formData.get("businessName") as string) || "",
     postalCode: (formData.get("postalCode") as string) || null,

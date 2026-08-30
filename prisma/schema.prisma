@@ -41,6 +41,34 @@ model Project {
   updatedAt   DateTime  @updatedAt
   tasks       Task[]
   invoiceItems InvoiceItem[]
+  credentials SiteCredential[]
+  checkNotes  ProjectNote[]
+}
+
+/// テストサイト・本番サイトなどのURL/ID/パスワード置き場
+model SiteCredential {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  label     String // テストサイト / 本番サイト / サーバー管理画面 など
+  url       String?
+  loginId   String?
+  password  String?
+  note      String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// 先方への質問・確認事項をためておくメモ
+model ProjectNote {
+  id         String    @id @default(cuid())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  body       String
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
 }
 
 model Task {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { logout } from "@/app/actions/auth";
 
 const NAV_ITEMS = [
   { href: "/", label: "ダッシュボード", icon: "📊" },
@@ -59,6 +60,19 @@ function NavLinks({
   );
 }
 
+function LogoutButton() {
+  return (
+    <form action={logout} className="px-3 pb-2">
+      <button
+        type="submit"
+        className="w-full rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+      >
+        ログアウト
+      </button>
+    </form>
+  );
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -72,6 +86,9 @@ export default function Sidebar() {
       document.body.style.overflow = original;
     };
   }, [open]);
+
+  // ログイン画面・セットアップ画面ではナビゲーションを出さない
+  if (pathname === "/login" || pathname === "/setup") return null;
 
   return (
     <>
@@ -125,6 +142,7 @@ export default function Sidebar() {
               </button>
             </div>
             <NavLinks pathname={pathname} onNavigate={() => setOpen(false)} />
+            <LogoutButton />
             <p className="px-5 pb-4 text-[11px] text-slate-500">
               for Web制作フリーランス
             </p>
@@ -144,6 +162,7 @@ export default function Sidebar() {
           </div>
         </div>
         <NavLinks pathname={pathname} />
+        <LogoutButton />
         <p className="px-5 pb-4 text-[11px] text-slate-500">
           for Web制作フリーランス
         </p>
