@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { isLoggedIn, isPasswordConfigured } from "@/lib/auth";
 import { login } from "@/app/actions/auth";
 
 export const dynamic = "force-dynamic";
@@ -7,6 +9,10 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
+  // 未設定なら初回セットアップへ、ログイン済みならトップへ
+  if (!(await isPasswordConfigured())) redirect("/setup");
+  if (await isLoggedIn()) redirect("/");
+
   const { error } = await searchParams;
 
   return (

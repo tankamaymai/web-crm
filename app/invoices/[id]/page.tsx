@@ -16,6 +16,7 @@ import DeleteButton from "@/components/DeleteButton";
 import TaxModeSelect from "@/components/TaxModeSelect";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,7 @@ export default async function InvoiceDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAuth();
   const { id } = await params;
   const invoice = await prisma.invoice.findUnique({
     where: { id },

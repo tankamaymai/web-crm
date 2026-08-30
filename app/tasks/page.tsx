@@ -5,10 +5,12 @@ import TaskBoard, {
   type ProjectOption,
   type TaskDto,
 } from "@/components/tasks/TaskBoard";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function TasksPage() {
+  await requireAuth();
   const today = todayJST();
   const [projects, allTasks] = await Promise.all([
     prisma.project.findMany({

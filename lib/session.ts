@@ -1,24 +1,76 @@
-// セッションCookieの署名・検証。
-// proxy.ts からも import するため、next/headers などには依存させない。
+// パスワードのハッシュ化とセッションCookieの署名・検証。
+// ログイン情報はDB(Settings)に保存する。環境変数の設定は不要。
 
 export const SESSION_COOKIE = "web_crm_session";
 const SESSION_DAYS = 30;
+const PBKDF2_ITERATIONS = 100_000;
 
 const encoder = new TextEncoder();
 
-/** ログインパスワード（未設定なら null = 未セットアップ） */
-export function getAppPassword(): string | null {
-  // 貼り付け時に混入しがちな前後の空白・改行は無視する
-  const value = process.env.APP_PASSWORD?.trim();
-  return value && value.length > 0 ? value : null;
+function toHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
-// 署名鍵はパスワードから導出する。環境変数を1つに保てるうえ、
-// パスワードを変えると既存のセッションが自動的に無効になる。
-async function signingKey(password: string): Promise<CryptoKey> {
+function fromHex(hex: string): Uint8Array {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) {
+    out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  }
+  return out;
+}
+
+function randomHex(byteLength: number): string {
+  return toHex(crypto.getRandomValues(new Uint8Array(byteLength)));
+}
+
+export function generateSalt(): string {
+  return randomHex(16);
+}
+
+export function generateSessionSecret(): string {
+  return randomHex(32);
+}
+
+/** パスワードをPBKDF2-SHA256でハッシュ化する */
+export async function hashPassword(
+  password: string,
+  salt: string
+): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: fromHex(salt) as unknown as BufferSource,
+      iterations: PBKDF2_ITERATIONS,
+      hash: "SHA-256",
+    },
+    key,
+    256
+  );
+  return toHex(new Uint8Array(bits));
+}
+
+/** ハッシュ同士を定数時間で比較する */
+export function hashesMatch(a: string, b: string): boolean {
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < a.length && i < b.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+async function signingKey(secret: string): Promise<CryptoKey> {
   return crypto.subtle.importKey(
     "raw",
-    encoder.encode(`web-crm/session/${password}`),
+    encoder.encode(secret),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign", "verify"]
@@ -32,8 +84,7 @@ function toBase64Url(bytes: ArrayBuffer): string {
 
 function fromBase64Url(value: string): Uint8Array | null {
   try {
-    const padded = value.replace(/-/g, "+").replace(/_/g, "/");
-    const binary = atob(padded);
+    const binary = atob(value.replace(/-/g, "+").replace(/_/g, "/"));
     return Uint8Array.from(binary, (c) => c.charCodeAt(0));
   } catch {
     return null;
@@ -41,12 +92,12 @@ function fromBase64Url(value: string): Uint8Array | null {
 }
 
 /** `有効期限.署名` 形式のトークンを作る */
-export async function createSessionToken(password: string): Promise<string> {
+export async function createSessionToken(secret: string): Promise<string> {
   const expiresAt = Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000;
   const payload = String(expiresAt);
   const signature = await crypto.subtle.sign(
     "HMAC",
-    await signingKey(password),
+    await signingKey(secret),
     encoder.encode(payload)
   );
   return `${payload}.${toBase64Url(signature)}`;
@@ -54,7 +105,7 @@ export async function createSessionToken(password: string): Promise<string> {
 
 export async function verifySessionToken(
   token: string | undefined,
-  password: string
+  secret: string
 ): Promise<boolean> {
   if (!token) return false;
   const [payload, signature] = token.split(".");
@@ -69,26 +120,10 @@ export async function verifySessionToken(
   // crypto.subtle.verify は定数時間で比較される
   return crypto.subtle.verify(
     "HMAC",
-    await signingKey(password),
+    await signingKey(secret),
     signatureBytes as unknown as BufferSource,
     encoder.encode(payload)
   );
-}
-
-/** パスワード照合（ダイジェスト同士を定数時間で比較する） */
-export async function passwordMatches(
-  input: string,
-  expected: string
-): Promise<boolean> {
-  const [a, b] = await Promise.all([
-    crypto.subtle.digest("SHA-256", encoder.encode(input)),
-    crypto.subtle.digest("SHA-256", encoder.encode(expected)),
-  ]);
-  const x = new Uint8Array(a);
-  const y = new Uint8Array(b);
-  let diff = x.length ^ y.length;
-  for (let i = 0; i < x.length && i < y.length; i++) diff |= x[i] ^ y[i];
-  return diff === 0;
 }
 
 export const SESSION_MAX_AGE = SESSION_DAYS * 24 * 60 * 60;

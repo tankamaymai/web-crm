@@ -8,10 +8,12 @@ import InvoiceComposer, {
   type ComposerProject,
 } from "@/components/InvoiceComposer";
 import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewInvoicePage() {
+  await requireAuth();
   const today = todayJST();
   const [settings, clients, projects] = await Promise.all([
     getSettings(),

@@ -3,10 +3,12 @@ import { createProject } from "@/app/actions/projects";
 import PageHeader from "@/components/PageHeader";
 import ProjectForm from "@/components/ProjectForm";
 import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function NewProjectPage() {
+  await requireAuth();
   const clients = await prisma.client.findMany({ orderBy: { name: "asc" } });
 
   return (

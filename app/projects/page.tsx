@@ -10,6 +10,7 @@ import { ProjectStatusBadge } from "@/components/StatusBadge";
 import DueDateLabel from "@/components/DueDateLabel";
 import Link from "next/link";
 import type { Client, Project } from "@prisma/client";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,7 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  await requireAuth();
   const { status = "active" } = await searchParams;
   const where =
     status === "all"

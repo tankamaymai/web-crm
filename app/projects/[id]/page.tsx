@@ -15,6 +15,7 @@ import SiteCredentials, {
 import ProjectNotes, { type NoteDto } from "@/components/ProjectNotes";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,7 @@ export default async function ProjectDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAuth();
   const { id } = await params;
   const project = await prisma.project.findUnique({
     where: { id },

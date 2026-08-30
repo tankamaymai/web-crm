@@ -3,6 +3,7 @@ import { formatMonth, todayJST } from "@/lib/dates";
 import { PROJECT_STATUS_LABELS } from "@/lib/status";
 import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
+  await requireAuth();
   const { month } = await searchParams;
   const today = todayJST();
   const current =

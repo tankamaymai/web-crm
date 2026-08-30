@@ -14,6 +14,7 @@ import MonthlyChart, {
 } from "@/components/MonthlyChart";
 import GoalGauge from "@/components/GoalGauge";
 import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,7 @@ function PipelineStage({
 }
 
 export default async function DashboardPage() {
+  await requireAuth();
   const today = todayJST();
   const thisMonth = startOfMonth(today);
   const nextMonth = addMonths(thisMonth, 1);

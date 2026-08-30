@@ -126,6 +126,10 @@ model Settings {
   bankInfo           String? // 振込先情報
   defaultTaxRate     Int     @default(10)
   monthlyGoal        Int     @default(0) // 月次売上目標（税込・円）。0なら未設定
+  // ログイン情報。初回アクセス時に画面から設定する（環境変数は不要）
+  passwordHash       String? // PBKDF2-SHA256
+  passwordSalt       String?
+  sessionSecret      String? // セッションCookieの署名鍵
   paymentTermDays    Int     @default(30) // 支払期限（発行日からの日数）
   invoiceNotes       String? // 請求書の備考デフォルト
 }

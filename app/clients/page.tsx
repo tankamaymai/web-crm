@@ -5,10 +5,12 @@ import PageHeader from "@/components/PageHeader";
 import DeleteButton from "@/components/DeleteButton";
 import TaxModeSelect from "@/components/TaxModeSelect";
 import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function ClientsPage() {
+  await requireAuth();
   const clients = await prisma.client.findMany({
     orderBy: { createdAt: "asc" },
     include: { _count: { select: { projects: true } } },
