@@ -74,6 +74,12 @@ export default async function ProjectDetailPage({
               </button>
             </form>
             <Link
+              href={`/projects/new?from=${project.id}`}
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              📋 コピーして新規作成
+            </Link>
+            <Link
               href={`/projects/${project.id}/edit`}
               className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
             >

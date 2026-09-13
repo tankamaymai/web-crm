@@ -24,6 +24,30 @@ function projectData(formData: FormData) {
 export async function createProject(formData: FormData) {
   await requireAuth();
   const project = await prisma.project.create({ data: projectData(formData) });
+
+  // 過去案件からのコピー時に、サイト情報（テストサイトのURL/ID/パスワード等）を引き継ぐ。
+  // 修正案件では同じテストサイトを使うことが多いため。
+  const copyFrom = (formData.get("copyFrom") as string) || null;
+  if (copyFrom && formData.get("copyCredentials") === "on") {
+    const credentials = await prisma.siteCredential.findMany({
+      where: { projectId: copyFrom },
+      orderBy: { sortOrder: "asc" },
+    });
+    if (credentials.length > 0) {
+      await prisma.siteCredential.createMany({
+        data: credentials.map((c) => ({
+          projectId: project.id,
+          label: c.label,
+          url: c.url,
+          loginId: c.loginId,
+          password: c.password,
+          note: c.note,
+          sortOrder: c.sortOrder,
+        })),
+      });
+    }
+  }
+
   revalidatePath("/projects");
   revalidatePath("/calendar");
   revalidatePath("/");
