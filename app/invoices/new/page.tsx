@@ -6,6 +6,7 @@ import PageHeader from "@/components/PageHeader";
 import InvoiceComposer, {
   type ComposerClient,
   type ComposerProject,
+  type ComposerTemplate,
 } from "@/components/InvoiceComposer";
 import Link from "next/link";
 import { requireAuth } from "@/lib/auth";
@@ -15,13 +16,17 @@ export const dynamic = "force-dynamic";
 export default async function NewInvoicePage() {
   await requireAuth();
   const today = todayJST();
-  const [settings, clients, projects] = await Promise.all([
+  const [settings, clients, projects, templates] = await Promise.all([
     getSettings(),
     prisma.client.findMany({ orderBy: { name: "asc" } }),
     prisma.project.findMany({
       where: { status: { notIn: ["CANCELLED"] } },
       orderBy: [{ createdAt: "desc" }],
       include: { _count: { select: { invoiceItems: true } } },
+    }),
+    prisma.invoiceTemplate.findMany({
+      orderBy: { sortOrder: "asc" },
+      include: { items: { orderBy: { sortOrder: "asc" } } },
     }),
   ]);
 
@@ -41,9 +46,31 @@ export default async function NewInvoicePage() {
     billed: p._count.invoiceItems > 0,
   }));
 
+  const composerTemplates: ComposerTemplate[] = templates.map((t) => ({
+    id: t.id,
+    name: t.name,
+    notes: t.notes,
+    taxMode: t.taxMode,
+    items: t.items.map((item) => ({
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    })),
+  }));
+
   return (
     <div>
-      <PageHeader title="請求書を作成" />
+      <PageHeader
+        title="請求書を作成"
+        action={
+          <Link
+            href="/invoices/templates"
+            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+          >
+            📄 テンプレート管理
+          </Link>
+        }
+      />
 
       {clients.length === 0 ? (
         <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-gray-500 shadow-sm">
@@ -56,6 +83,7 @@ export default async function NewInvoicePage() {
         <InvoiceComposer
           clients={composerClients}
           projects={composerProjects}
+          templates={composerTemplates}
           defaultTaxRate={settings.defaultTaxRate}
           todayStr={toDateInputValue(today)}
           defaultDueDateStr={toDateInputValue(endOfNextMonth(today))}

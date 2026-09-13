@@ -115,6 +115,28 @@ model InvoiceItem {
   sortOrder   Int     @default(0)
 }
 
+/// よく使う請求内容の定型パターン。新規請求書の明細に流し込んで使う
+model InvoiceTemplate {
+  id        String                @id @default(cuid())
+  name      String
+  notes     String? // 請求書の備考（未入力なら設定のデフォルトを使う）
+  taxMode   String? // 未指定なら顧客の設定に従う
+  sortOrder Int                   @default(0)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  items     InvoiceTemplateItem[]
+}
+
+model InvoiceTemplateItem {
+  id          String          @id @default(cuid())
+  templateId  String
+  template    InvoiceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int             @default(1)
+  unitPrice   Int             @default(0) // 税込・円
+  sortOrder   Int             @default(0)
+}
+
 model Settings {
   id                 String  @id @default("default")
   businessName       String  @default("")

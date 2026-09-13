@@ -12,6 +12,14 @@ export type ComposerClient = {
   taxMode: string;
 };
 
+export type ComposerTemplate = {
+  id: string;
+  name: string;
+  notes: string | null;
+  taxMode: string | null;
+  items: { description: string; quantity: number; unitPrice: number }[];
+};
+
 export type ComposerProject = {
   id: string;
   clientId: string;
@@ -48,6 +56,7 @@ function yen(n: number): string {
 export default function InvoiceComposer({
   clients,
   projects,
+  templates,
   defaultTaxRate,
   todayStr,
   defaultDueDateStr,
@@ -55,6 +64,7 @@ export default function InvoiceComposer({
 }: {
   clients: ComposerClient[];
   projects: ComposerProject[];
+  templates: ComposerTemplate[];
   defaultTaxRate: number;
   todayStr: string;
   defaultDueDateStr: string;
@@ -65,6 +75,8 @@ export default function InvoiceComposer({
   const [taxMode, setTaxMode] = useState("STANDARD");
   const [rows, setRows] = useState<Row[]>([emptyRow()]);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [notes, setNotes] = useState(defaultNotes);
 
   const clientProjects = useMemo(
     () => projects.filter((p) => p.clientId === clientId),
@@ -85,6 +97,23 @@ export default function InvoiceComposer({
     if (client) setTaxMode(client.taxMode);
     // 顧客が変わると案件の紐付けが無効になるので外す
     setRows((prev) => prev.map((r) => ({ ...r, projectId: "" })));
+  };
+
+  /** テンプレートの明細を流し込む。備考・税区分も指定があれば反映する */
+  const applyTemplate = (template: ComposerTemplate) => {
+    const newRows = template.items.map((item) => ({
+      ...emptyRow(),
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    }));
+    setRows((prev) => {
+      const meaningful = prev.filter((r) => r.description.trim() !== "");
+      return [...meaningful, ...newRows];
+    });
+    if (template.taxMode) setTaxMode(template.taxMode);
+    if (template.notes) setNotes(template.notes);
+    setTemplateOpen(false);
   };
 
   /** 選んだ案件を明細行として流し込む（税別→税込に換算） */
@@ -186,16 +215,79 @@ export default function InvoiceComposer({
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-bold">明細</h2>
-          {clientId && clientProjects.length > 0 && (
-            <button
-              type="button"
-              onClick={() => setPickerOpen((v) => !v)}
-              className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-100"
-            >
-              📁 案件から明細を追加
-            </button>
-          )}
+          <div className="flex flex-wrap gap-2">
+            {templates.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setTemplateOpen((v) => !v)}
+                className="rounded-lg border border-violet-300 bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 hover:bg-violet-100"
+              >
+                📄 テンプレートから追加
+              </button>
+            )}
+            {clientId && clientProjects.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setPickerOpen((v) => !v)}
+                className="rounded-lg border border-sky-300 bg-sky-50 px-3 py-1.5 text-sm font-medium text-sky-700 hover:bg-sky-100"
+              >
+                📁 案件から明細を追加
+              </button>
+            )}
+          </div>
         </div>
+
+        {templateOpen && (
+          <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50/60 p-3">
+            <p className="mb-2 text-sm font-medium text-violet-900">
+              使うテンプレートを選んでください
+            </p>
+            <ul className="max-h-64 space-y-1 overflow-y-auto">
+              {templates.map((t) => {
+                const templateTotal = t.items.reduce(
+                  (sum, item) => sum + item.quantity * item.unitPrice,
+                  0
+                );
+                return (
+                  <li key={t.id}>
+                    <button
+                      type="button"
+                      onClick={() => applyTemplate(t)}
+                      className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-white"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-medium">
+                          {t.name}
+                        </span>
+                        <span className="block truncate text-xs text-gray-500">
+                          {t.items.map((item) => item.description).join(" / ")}
+                        </span>
+                      </span>
+                      <span className="shrink-0 tabular-nums text-gray-600">
+                        {yen(templateTotal)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="mt-2 flex justify-between border-t border-violet-200 pt-2">
+              <Link
+                href="/invoices/templates"
+                className="text-xs text-violet-700 hover:underline"
+              >
+                テンプレートを編集する
+              </Link>
+              <button
+                type="button"
+                onClick={() => setTemplateOpen(false)}
+                className="rounded px-2 py-0.5 text-xs text-gray-500 hover:bg-white"
+              >
+                閉じる
+              </button>
+            </div>
+          </div>
+        )}
 
         {!clientId && (
           <p className="mb-4 rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-500">
@@ -323,7 +415,8 @@ export default function InvoiceComposer({
           <textarea
             name="notes"
             rows={3}
-            defaultValue={defaultNotes}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
             className={inputClass}
           />
         </label>

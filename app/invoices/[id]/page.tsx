@@ -12,6 +12,7 @@ import { formatDate, formatYen, toDateInputValue } from "@/lib/dates";
 import PageHeader from "@/components/PageHeader";
 import { InvoiceStatusBadge } from "@/components/StatusBadge";
 import CelebrateButton from "@/components/CelebrateButton";
+import SaveAsTemplateButton from "@/components/SaveAsTemplateButton";
 import DeleteButton from "@/components/DeleteButton";
 import TaxModeSelect from "@/components/TaxModeSelect";
 import { notFound } from "next/navigation";
@@ -100,6 +101,12 @@ export default async function InvoiceDetailPage({
                 </CelebrateButton>
               </form>
             )}
+            <SaveAsTemplateButton
+              invoiceId={invoice.id}
+              defaultName={
+                invoice.items[0]?.description ?? invoice.invoiceNumber
+              }
+            />
             <DeleteButton
               action={deleteInvoice.bind(null, invoice.id)}
               confirmMessage={`請求書 ${invoice.invoiceNumber} を削除しますか？`}

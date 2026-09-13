@@ -62,12 +62,20 @@ export default async function InvoicesPage({
       <PageHeader
         title="請求書"
         action={
-          <Link
-            href="/invoices/new"
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
-          >
-            + 新規請求書
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/invoices/templates"
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              📄 テンプレート
+            </Link>
+            <Link
+              href="/invoices/new"
+              className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+            >
+              + 新規請求書
+            </Link>
+          </div>
         }
       />
 
