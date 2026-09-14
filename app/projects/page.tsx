@@ -16,9 +16,16 @@ export const dynamic = "force-dynamic";
 
 const FILTERS = [
   { key: "active", label: "進行中のみ" },
+  { key: "unbilled", label: "未請求" },
   { key: "all", label: "すべて" },
   ...PROJECT_STATUSES.map((s) => ({ key: s, label: PROJECT_STATUS_LABELS[s] })),
 ];
+
+// 請求書の明細を1件も持たない案件（中止した案件は請求しないので除く）
+const UNBILLED_WHERE = {
+  invoiceItems: { none: {} },
+  status: { not: "CANCELLED" },
+};
 
 const NO_DUE_DATE_KEY = "unscheduled";
 
@@ -61,29 +68,34 @@ export default async function ProjectsPage({
   const where =
     status === "all"
       ? {}
-      : status === "active"
-        ? { status: { in: ACTIVE_PROJECT_STATUSES } }
-        : { status };
+      : status === "unbilled"
+        ? UNBILLED_WHERE
+        : status === "active"
+          ? { status: { in: ACTIVE_PROJECT_STATUSES } }
+          : { status };
 
-  const [projects, pendingNoteCounts, credentialCounts] = await Promise.all([
-    prisma.project.findMany({
-      where,
-      include: { client: true },
-      orderBy: [
-        { dueDate: { sort: "asc", nulls: "last" } },
-        { createdAt: "desc" },
-      ],
-    }),
-    prisma.projectNote.groupBy({
-      by: ["projectId"],
-      where: { resolved: false },
-      _count: { _all: true },
-    }),
-    prisma.siteCredential.groupBy({
-      by: ["projectId"],
-      _count: { _all: true },
-    }),
-  ]);
+  const [projects, pendingNoteCounts, credentialCounts, unbilledCount] =
+    await Promise.all([
+      prisma.project.findMany({
+        where,
+        include: { client: true },
+        orderBy: [
+          { dueDate: { sort: "asc", nulls: "last" } },
+          { createdAt: "desc" },
+        ],
+      }),
+      prisma.projectNote.groupBy({
+        by: ["projectId"],
+        where: { resolved: false },
+        _count: { _all: true },
+      }),
+      prisma.siteCredential.groupBy({
+        by: ["projectId"],
+        _count: { _all: true },
+      }),
+      // 「未請求」タブのバッジ用
+      prisma.project.count({ where: UNBILLED_WHERE }),
+    ]);
 
   const pendingNotesByProject = new Map(
     pendingNoteCounts.map((row) => [row.projectId, row._count._all])
@@ -120,6 +132,15 @@ export default async function ProjectsPage({
             }`}
           >
             {f.label}
+            {f.key === "unbilled" && unbilledCount > 0 && (
+              <span
+                className={`ml-1.5 tabular-nums ${
+                  status === f.key ? "text-white/70" : "text-amber-600"
+                }`}
+              >
+                {unbilledCount}
+              </span>
+            )}
           </Link>
         ))}
       </div>
