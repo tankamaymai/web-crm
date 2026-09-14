@@ -3,6 +3,7 @@ import { formatMonth, todayJST } from "@/lib/dates";
 import { PROJECT_STATUS_LABELS } from "@/lib/status";
 import PageHeader from "@/components/PageHeader";
 import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,7 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
+  await requireAuth();
   const { month } = await searchParams;
   const today = todayJST();
   const current =
@@ -79,7 +81,7 @@ export default async function CalendarPage({
       <PageHeader
         title="カレンダー"
         action={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link
               href={`/calendar?month=${monthParam(prev)}`}
               className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50"
@@ -104,7 +106,8 @@ export default async function CalendarPage({
 
       <h2 className="text-lg font-bold mb-4">{formatMonth(current)}</h2>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+        <div className="min-w-[700px]">
         <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50 text-center text-xs text-gray-500">
           {WEEKDAYS.map((w, i) => (
             <div
@@ -166,6 +169,7 @@ export default async function CalendarPage({
               </div>
             );
           })}
+        </div>
         </div>
       </div>
 

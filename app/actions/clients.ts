@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 import { TAX_MODES } from "@/lib/invoice";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -20,17 +21,20 @@ function clientData(formData: FormData) {
 }
 
 export async function createClient(formData: FormData) {
+  await requireAuth();
   await prisma.client.create({ data: clientData(formData) });
   revalidatePath("/clients");
 }
 
 export async function updateClient(id: string, formData: FormData) {
+  await requireAuth();
   await prisma.client.update({ where: { id }, data: clientData(formData) });
   revalidatePath("/clients");
   redirect("/clients");
 }
 
 export async function deleteClient(id: string) {
+  await requireAuth();
   const count = await prisma.project.count({ where: { clientId: id } });
   if (count > 0) {
     throw new Error("案件が紐づいている顧客は削除できません");

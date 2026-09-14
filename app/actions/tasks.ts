@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+import { requireAuth } from "@/lib/auth";
 import { parseDateInput, todayJST } from "@/lib/dates";
 import { revalidatePath } from "next/cache";
 
@@ -16,6 +17,7 @@ function normalizePriority(value: unknown): number {
 }
 
 export async function createTask(formData: FormData) {
+  await requireAuth();
   const title = ((formData.get("title") as string) || "").trim();
   if (!title) return;
   const projectId = (formData.get("projectId") as string) || null;
@@ -36,6 +38,7 @@ export async function createTask(formData: FormData) {
 }
 
 export async function toggleTask(id: string) {
+  await requireAuth();
   const task = await prisma.task.findUniqueOrThrow({ where: { id } });
   await prisma.task.update({
     where: { id },
@@ -48,6 +51,7 @@ export async function toggleTask(id: string) {
 }
 
 export async function deleteTask(id: string) {
+  await requireAuth();
   await prisma.task.delete({ where: { id } });
   revalidateTaskPages();
 }
@@ -56,6 +60,7 @@ export async function updateTask(
   id: string,
   data: { title?: string; dueDate?: string | null; priority?: number }
 ) {
+  await requireAuth();
   const update: {
     title?: string;
     dueDate?: Date | null;
@@ -80,6 +85,7 @@ export async function updateTask(
 export async function reorderTasks(
   updates: { id: string; sortOrder: number; dueDate: string | null }[]
 ) {
+  await requireAuth();
   if (updates.length === 0) return;
   await prisma.$transaction(
     updates.map((u) =>

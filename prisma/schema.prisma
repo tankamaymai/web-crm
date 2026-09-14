@@ -30,7 +30,8 @@ model Project {
   clientId    String
   client      Client    @relation(fields: [clientId], references: [id])
   status      String    @default("LEAD") // LEAD, IN_PROGRESS, REVIEW, DELIVERED, COMPLETED, CANCELLED
-  amount      Int       @default(0) // 受注金額（税別・円）
+  amount      Int       @default(0) // 受注金額（税別・円）。recurring の場合は毎月の請求額
+  recurring   Boolean   @default(false) // 月額案件（毎月請求書を発行する）
   startDate   DateTime?
   dueDate     DateTime?
   siteUrl     String?
@@ -39,7 +40,35 @@ model Project {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   tasks       Task[]
-  invoices    Invoice[]
+  invoiceItems InvoiceItem[]
+  credentials SiteCredential[]
+  checkNotes  ProjectNote[]
+}
+
+/// テストサイト・本番サイトなどのURL/ID/パスワード置き場
+model SiteCredential {
+  id        String   @id @default(cuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  label     String // テストサイト / 本番サイト / サーバー管理画面 など
+  url       String?
+  loginId   String?
+  password  String?
+  note      String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// 先方への質問・確認事項をためておくメモ
+model ProjectNote {
+  id         String    @id @default(cuid())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  body       String
+  resolved   Boolean   @default(false)
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
 }
 
 model Task {
@@ -61,8 +90,6 @@ model Invoice {
   invoiceNumber String        @unique
   clientId      String
   client        Client        @relation(fields: [clientId], references: [id])
-  projectId     String?
-  project       Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
   status        String        @default("DRAFT") // DRAFT, SENT, PAID
   issueDate     DateTime      @default(now())
   dueDate       DateTime?
@@ -79,10 +106,35 @@ model InvoiceItem {
   id          String  @id @default(cuid())
   invoiceId   String
   invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  // 明細ごとに案件を紐付ける。1枚の請求書に複数案件をまとめられる
+  projectId   String?
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   description String
   quantity    Int     @default(1)
   unitPrice   Int     @default(0) // 税込・円
   sortOrder   Int     @default(0)
+}
+
+/// よく使う請求内容の定型パターン。新規請求書の明細に流し込んで使う
+model InvoiceTemplate {
+  id        String                @id @default(cuid())
+  name      String
+  notes     String? // 請求書の備考（未入力なら設定のデフォルトを使う）
+  taxMode   String? // 未指定なら顧客の設定に従う
+  sortOrder Int                   @default(0)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
+  items     InvoiceTemplateItem[]
+}
+
+model InvoiceTemplateItem {
+  id          String          @id @default(cuid())
+  templateId  String
+  template    InvoiceTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int             @default(1)
+  unitPrice   Int             @default(0) // 税込・円
+  sortOrder   Int             @default(0)
 }
 
 model Settings {
@@ -95,6 +147,11 @@ model Settings {
   registrationNumber String? // 適格請求書発行事業者登録番号（T+13桁）
   bankInfo           String? // 振込先情報
   defaultTaxRate     Int     @default(10)
+  monthlyGoal        Int     @default(0) // 月次売上目標（税込・円）。0なら未設定
+  // ログイン情報。初回アクセス時に画面から設定する（環境変数は不要）
+  passwordHash       String? // PBKDF2-SHA256
+  passwordSalt       String?
+  sessionSecret      String? // セッションCookieの署名鍵
   paymentTermDays    Int     @default(30) // 支払期限（発行日からの日数）
   invoiceNotes       String? // 請求書の備考デフォルト
 }

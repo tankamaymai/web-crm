@@ -4,6 +4,7 @@ import PageHeader from "@/components/PageHeader";
 import TaxModeSelect from "@/components/TaxModeSelect";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +13,7 @@ export default async function ClientEditPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAuth();
   const { id } = await params;
   const client = await prisma.client.findUnique({ where: { id } });
   if (!client) notFound();
@@ -20,7 +22,7 @@ export default async function ClientEditPage({
     <div>
       <PageHeader title="顧客を編集" />
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
-        <form action={updateClient.bind(null, client.id)} className="grid grid-cols-2 gap-4">
+        <form action={updateClient.bind(null, client.id)} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="text-sm text-gray-600">顧客名 *</span>
             <input
@@ -55,13 +57,13 @@ export default async function ClientEditPage({
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
           </label>
-          <label className="block col-span-2">
+          <label className="block sm:col-span-2">
             <span className="text-sm text-gray-600">
               消費税の計算方法（この顧客への請求書のデフォルト）
             </span>
             <TaxModeSelect defaultValue={client.taxMode} />
           </label>
-          <label className="block col-span-2">
+          <label className="block sm:col-span-2">
             <span className="text-sm text-gray-600">メモ</span>
             <textarea
               name="notes"
@@ -70,7 +72,7 @@ export default async function ClientEditPage({
               className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             />
           </label>
-          <div className="col-span-2 flex gap-3">
+          <div className="flex gap-3 sm:col-span-2">
             <button
               type="submit"
               className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"

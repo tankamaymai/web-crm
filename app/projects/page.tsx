@@ -10,6 +10,7 @@ import { ProjectStatusBadge } from "@/components/StatusBadge";
 import DueDateLabel from "@/components/DueDateLabel";
 import Link from "next/link";
 import type { Client, Project } from "@prisma/client";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +56,7 @@ export default async function ProjectsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  await requireAuth();
   const { status = "active" } = await searchParams;
   const where =
     status === "all"
@@ -63,11 +65,32 @@ export default async function ProjectsPage({
         ? { status: { in: ACTIVE_PROJECT_STATUSES } }
         : { status };
 
-  const projects = await prisma.project.findMany({
-    where,
-    include: { client: true },
-    orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { createdAt: "desc" }],
-  });
+  const [projects, pendingNoteCounts, credentialCounts] = await Promise.all([
+    prisma.project.findMany({
+      where,
+      include: { client: true },
+      orderBy: [
+        { dueDate: { sort: "asc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
+    }),
+    prisma.projectNote.groupBy({
+      by: ["projectId"],
+      where: { resolved: false },
+      _count: { _all: true },
+    }),
+    prisma.siteCredential.groupBy({
+      by: ["projectId"],
+      _count: { _all: true },
+    }),
+  ]);
+
+  const pendingNotesByProject = new Map(
+    pendingNoteCounts.map((row) => [row.projectId, row._count._all])
+  );
+  const credentialsByProject = new Map(
+    credentialCounts.map((row) => [row.projectId, row._count._all])
+  );
 
   const monthGroups = groupByMonth(projects);
 
@@ -113,7 +136,7 @@ export default async function ProjectsPage({
             key={group.key}
             className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
           >
-            <div className="flex items-baseline justify-between px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 bg-gray-50 border-b border-gray-200">
               <h2 className="font-bold text-gray-700">
                 {group.label}
                 <span className="ml-2 text-xs font-normal text-gray-400">
@@ -124,7 +147,8 @@ export default async function ProjectsPage({
                 受注金額合計 {formatYen(group.total)}
               </span>
             </div>
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[640px] text-sm">
               <thead className="text-left text-xs text-gray-400">
                 <tr>
                   <th className="px-4 py-2 font-medium">案件名</th>
@@ -144,6 +168,24 @@ export default async function ProjectsPage({
                       >
                         {p.title}
                       </Link>
+                      {p.recurring && (
+                        <span className="ml-1.5 inline-block rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                          🔁 月額
+                        </span>
+                      )}
+                      {(credentialsByProject.get(p.id) ?? 0) > 0 && (
+                        <span
+                          title="サイト情報あり"
+                          className="ml-1.5 inline-block text-xs"
+                        >
+                          🔑
+                        </span>
+                      )}
+                      {(pendingNotesByProject.get(p.id) ?? 0) > 0 && (
+                        <span className="ml-1.5 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                          💬 確認 {pendingNotesByProject.get(p.id)}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-gray-600">{p.client.name}</td>
                     <td className="px-4 py-3">
@@ -162,6 +204,7 @@ export default async function ProjectsPage({
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         ))}
       </div>

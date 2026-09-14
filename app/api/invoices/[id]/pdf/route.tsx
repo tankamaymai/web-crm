@@ -3,6 +3,7 @@ import { getSettings } from "@/lib/settings";
 import InvoicePdf from "@/lib/pdf/InvoicePdf";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  await requireAuth();
   const { id } = await params;
   const invoice = await prisma.invoice.findUnique({
     where: { id },

@@ -3,6 +3,7 @@ import { updateProject } from "@/app/actions/projects";
 import PageHeader from "@/components/PageHeader";
 import ProjectForm from "@/components/ProjectForm";
 import { notFound } from "next/navigation";
+import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function ProjectEditPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireAuth();
   const { id } = await params;
   const [project, clients] = await Promise.all([
     prisma.project.findUnique({ where: { id } }),

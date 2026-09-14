@@ -53,6 +53,7 @@ async function main() {
       // インボイス登録済みの場合のみ設定画面で登録番号を入力する
       bankInfo: "サンプル銀行 渋谷支店\n普通 1234567\nヤマダ タロウ",
       defaultTaxRate: 10,
+      monthlyGoal: 500000,
       paymentTermDays: 30,
     },
   });
@@ -125,6 +126,7 @@ async function main() {
       clientId: tanaka.id,
       status: "IN_PROGRESS",
       amount: 30000,
+      recurring: true,
       startDate: monthsAgo(today, 6, 1),
       description: "月額保守契約。毎月末請求。",
     },
@@ -185,7 +187,6 @@ async function main() {
       data: {
         invoiceNumber: invoiceNumberFor(issue, 1),
         clientId: tanaka.id,
-        projectId: maintenance.id,
         status: "PAID",
         issueDate: issue,
         dueDate: endOfNextMonth(issue),
@@ -195,6 +196,7 @@ async function main() {
           create: [
             {
               description: `サイト保守費用（${issue.getUTCMonth() + 1}月分）`,
+              projectId: maintenance.id,
               quantity: 1,
               unitPrice: 33000,
             },
@@ -210,7 +212,6 @@ async function main() {
     data: {
       invoiceNumber: invoiceNumberFor(depositIssue, 2),
       clientId: suzuki.id,
-      projectId: renewal.id,
       status: "PAID",
       issueDate: depositIssue,
       dueDate: endOfNextMonth(depositIssue),
@@ -220,6 +221,7 @@ async function main() {
         create: [
           {
             description: "サイトリニューアル 着手金（50%）",
+            projectId: renewal.id,
             quantity: 1,
             unitPrice: 330000,
           },
@@ -233,7 +235,6 @@ async function main() {
     data: {
       invoiceNumber: invoiceNumberFor(balanceIssue, 2),
       clientId: suzuki.id,
-      projectId: renewal.id,
       status: "SENT",
       issueDate: balanceIssue,
       dueDate: endOfNextMonth(balanceIssue),
@@ -242,6 +243,7 @@ async function main() {
         create: [
           {
             description: "サイトリニューアル 残金（50%）",
+            projectId: renewal.id,
             quantity: 1,
             unitPrice: 330000,
           },
@@ -258,7 +260,6 @@ async function main() {
     data: {
       invoiceNumber: invoiceNumberFor(thisMonthIssue, 1),
       clientId: tanaka.id,
-      projectId: maintenance.id,
       status: "PAID",
       issueDate: thisMonthIssue,
       dueDate: endOfNextMonth(thisMonthIssue),
@@ -268,6 +269,7 @@ async function main() {
         create: [
           {
             description: `サイト保守費用（${thisMonthIssue.getUTCMonth() + 1}月分）`,
+            projectId: maintenance.id,
             quantity: 1,
             unitPrice: 33000,
           },

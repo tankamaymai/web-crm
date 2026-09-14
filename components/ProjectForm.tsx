@@ -8,17 +8,45 @@ export default function ProjectForm({
   clients,
   project,
   cancelHref,
+  copyFrom,
 }: {
   action: (formData: FormData) => Promise<void>;
   clients: Client[];
   project?: Project;
   cancelHref: string;
+  /** 過去案件からのコピーで開いたときの、コピー元の情報 */
+  copyFrom?: { id: string; title: string; credentialCount: number };
 }) {
   const inputClass =
     "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm";
   return (
-    <form action={action} className="grid grid-cols-2 gap-4">
-      <label className="block col-span-2">
+    <form action={action} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {copyFrom && (
+        <div className="rounded-lg border border-sky-200 bg-sky-50 px-3 py-2.5 text-sm sm:col-span-2">
+          <input type="hidden" name="copyFrom" value={copyFrom.id} />
+          <p className="text-sky-900">
+            「<strong>{copyFrom.title}</strong>」の内容をコピーしています。
+            <Link href="/projects/new" className="ml-2 text-sky-600 hover:underline">
+              やめる
+            </Link>
+          </p>
+          {copyFrom.credentialCount > 0 && (
+            <label className="mt-1.5 flex items-center gap-2 text-sky-900">
+              <input
+                name="copyCredentials"
+                type="checkbox"
+                defaultChecked
+                className="size-4 rounded accent-sky-600"
+              />
+              🔑 サイト情報も引き継ぐ（{copyFrom.credentialCount}件）
+            </label>
+          )}
+          <p className="mt-1 text-xs text-sky-700">
+            開始日・期日とステータスは引き継がれません。
+          </p>
+        </div>
+      )}
+      <label className="block sm:col-span-2">
         <span className="text-sm text-gray-600">案件名 *</span>
         <input name="title" required defaultValue={project?.title} className={inputClass} />
       </label>
@@ -64,6 +92,15 @@ export default function ProjectForm({
           defaultValue={project?.amount ?? 0}
           className={inputClass}
         />
+        <span className="mt-1.5 flex items-center gap-2 text-sm text-gray-600">
+          <input
+            name="recurring"
+            type="checkbox"
+            defaultChecked={project?.recurring ?? false}
+            className="size-4 rounded accent-sky-600"
+          />
+          月額案件（毎月この金額で請求書を発行）
+        </span>
       </label>
       <label className="block">
         <span className="text-sm text-gray-600">サイトURL</span>
@@ -93,7 +130,7 @@ export default function ProjectForm({
           className={inputClass}
         />
       </label>
-      <label className="block col-span-2">
+      <label className="block sm:col-span-2">
         <span className="text-sm text-gray-600">案件内容</span>
         <textarea
           name="description"
@@ -102,7 +139,7 @@ export default function ProjectForm({
           className={inputClass}
         />
       </label>
-      <label className="block col-span-2">
+      <label className="block sm:col-span-2">
         <span className="text-sm text-gray-600">メモ</span>
         <textarea
           name="notes"
@@ -111,7 +148,7 @@ export default function ProjectForm({
           className={inputClass}
         />
       </label>
-      <div className="col-span-2 flex gap-3">
+      <div className="flex gap-3 sm:col-span-2">
         <button
           type="submit"
           className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
