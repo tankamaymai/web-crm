@@ -7,7 +7,11 @@ import {
   setInvoiceStatus,
   updateInvoice,
 } from "@/app/actions/invoices";
-import { calcInvoiceTotals, transitionalDeductionRate } from "@/lib/invoice";
+import {
+  calcInvoiceTotals,
+  toExclusiveLines,
+  transitionalDeductionRate,
+} from "@/lib/invoice";
 import { formatDate, formatYen, toDateInputValue } from "@/lib/dates";
 import PageHeader from "@/components/PageHeader";
 import { InvoiceStatusBadge } from "@/components/StatusBadge";
@@ -66,6 +70,11 @@ export default async function InvoiceDetailPage({
     invoice.taxMode,
     invoice.issueDate
   );
+  const exclusiveLines = toExclusiveLines(
+    invoice.items,
+    invoice.taxRate,
+    subtotal
+  );
   const deductionPercent = Math.round(
     transitionalDeductionRate(invoice.issueDate) * 100
   );
@@ -80,9 +89,11 @@ export default async function InvoiceDetailPage({
           <div className="flex flex-wrap gap-3 items-center">
             <a
               href={`/api/invoices/${invoice.id}/pdf`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
             >
-              📄 PDFダウンロード
+              📄 PDFを開く
             </a>
             {invoice.status === "DRAFT" && (
               <form action={setInvoiceStatus.bind(null, invoice.id, "SENT")}>
@@ -133,13 +144,13 @@ export default async function InvoiceDetailPage({
                 <tr>
                   <th className="py-2 font-medium">品目</th>
                   <th className="py-2 font-medium text-right w-20">数量</th>
-                  <th className="py-2 font-medium text-right w-32">単価(税込)</th>
-                  <th className="py-2 font-medium text-right w-32">金額(税込)</th>
+                  <th className="py-2 font-medium text-right w-32">単価(税抜)</th>
+                  <th className="py-2 font-medium text-right w-32">金額(税抜)</th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {invoice.items.map((item) => (
+                {invoice.items.map((item, i) => (
                   <tr key={item.id}>
                     <td className="py-2.5">
                       <span className="block">{item.description}</span>
@@ -156,10 +167,10 @@ export default async function InvoiceDetailPage({
                       {item.quantity}
                     </td>
                     <td className="py-2.5 text-right tabular-nums">
-                      {formatYen(item.unitPrice)}
+                      {formatYen(exclusiveLines[i].unitPrice)}
                     </td>
                     <td className="py-2.5 text-right tabular-nums">
-                      {formatYen(item.quantity * item.unitPrice)}
+                      {formatYen(exclusiveLines[i].amount)}
                     </td>
                     <td className="py-2.5 text-right">
                       <DeleteButton
@@ -175,18 +186,18 @@ export default async function InvoiceDetailPage({
               <tfoot className="border-t border-gray-200">
                 <tr>
                   <td colSpan={3} className="py-2 text-right text-gray-500">
-                    小計（税抜 {formatYen(subtotal)}）
+                    小計（税抜）
                   </td>
                   <td className="py-2 text-right tabular-nums">
-                    {formatYen(subtotal + taxAmount)}
+                    {formatYen(subtotal)}
                   </td>
                   <td></td>
                 </tr>
                 <tr>
                   <td colSpan={3} className="py-1 text-right text-gray-500">
                     {invoice.taxMode === "STANDARD"
-                      ? `内 消費税（${invoice.taxRate}%）`
-                      : `内 消費税相当額（${invoice.taxRate}%）`}
+                      ? `消費税（${invoice.taxRate}%）`
+                      : `消費税相当額（${invoice.taxRate}%）`}
                   </td>
                   <td className="py-1 text-right tabular-nums">
                     {formatYen(taxAmount)}
