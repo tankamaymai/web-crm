@@ -104,34 +104,7 @@ export function calcInvoiceTotals(
   };
 }
 
-export type ExclusiveLine = {
-  /** 税抜単価（税込単価から逆算） */
-  unitPrice: number;
-  /** 税抜金額 */
-  amount: number;
-};
-
-/**
- * 明細を税抜で表示するための単価・金額を求める。
- * 保存値は税込なので逆算し、端数で行の合計が税抜小計とずれる場合は
- * 金額の大きい行で吸収して「明細の合計 = 小計」を保つ。
- */
-export function toExclusiveLines(
-  items: { quantity: number; unitPrice: number }[],
-  taxRate: number,
-  subtotal: number
-): ExclusiveLine[] {
-  const lines = items.map((item) => ({
-    unitPrice: Math.round((item.unitPrice * 100) / (100 + taxRate)),
-    amount: Math.round((item.quantity * item.unitPrice * 100) / (100 + taxRate)),
-  }));
-  const diff = subtotal - lines.reduce((sum, line) => sum + line.amount, 0);
-  if (diff !== 0 && lines.length > 0) {
-    let largest = 0;
-    lines.forEach((line, i) => {
-      if (Math.abs(line.amount) > Math.abs(lines[largest].amount)) largest = i;
-    });
-    lines[largest].amount += diff;
-  }
-  return lines;
+/** 税込単価から税抜単価を逆算する（明細の単価を税抜で表示するため） */
+export function exclusiveUnitPrice(unitPrice: number, taxRate: number): number {
+  return Math.round((unitPrice * 100) / (100 + taxRate));
 }

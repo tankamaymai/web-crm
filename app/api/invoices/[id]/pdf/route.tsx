@@ -26,10 +26,19 @@ export async function GET(
     <InvoicePdf invoice={invoice} settings={settings} />
   );
 
+  // 保存時のファイル名: 「取引先名 御請求書 9月分.pdf」（月は発行日の月）
+  const clientName = invoice.client.company || invoice.client.name;
+  const month = invoice.issueDate.getUTCMonth() + 1;
+  const fileName = `${clientName} 御請求書 ${month}月分.pdf`.replace(
+    /[\\/:*?"<>|]/g,
+    "_"
+  );
+
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${invoice.invoiceNumber}.pdf"`,
+      // 日本語ファイル名は filename* で渡し、古いブラウザ向けに英数字名も添える
+      "Content-Disposition": `inline; filename="${invoice.invoiceNumber}.pdf"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
     },
   });
 }
