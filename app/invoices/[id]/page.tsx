@@ -9,7 +9,7 @@ import {
 } from "@/app/actions/invoices";
 import {
   calcInvoiceTotals,
-  toExclusiveLines,
+  exclusiveUnitPrice,
   transitionalDeductionRate,
 } from "@/lib/invoice";
 import { formatDate, formatYen, toDateInputValue } from "@/lib/dates";
@@ -69,11 +69,6 @@ export default async function InvoiceDetailPage({
     invoice.taxRate,
     invoice.taxMode,
     invoice.issueDate
-  );
-  const exclusiveLines = toExclusiveLines(
-    invoice.items,
-    invoice.taxRate,
-    subtotal
   );
   const deductionPercent = Math.round(
     transitionalDeductionRate(invoice.issueDate) * 100
@@ -145,12 +140,12 @@ export default async function InvoiceDetailPage({
                   <th className="py-2 font-medium">品目</th>
                   <th className="py-2 font-medium text-right w-20">数量</th>
                   <th className="py-2 font-medium text-right w-32">単価(税抜)</th>
-                  <th className="py-2 font-medium text-right w-32">金額(税抜)</th>
+                  <th className="py-2 font-medium text-right w-32">金額(税込)</th>
                   <th className="w-10"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {invoice.items.map((item, i) => (
+                {invoice.items.map((item) => (
                   <tr key={item.id}>
                     <td className="py-2.5">
                       <span className="block">{item.description}</span>
@@ -167,10 +162,10 @@ export default async function InvoiceDetailPage({
                       {item.quantity}
                     </td>
                     <td className="py-2.5 text-right tabular-nums">
-                      {formatYen(exclusiveLines[i].unitPrice)}
+                      {formatYen(exclusiveUnitPrice(item.unitPrice, invoice.taxRate))}
                     </td>
                     <td className="py-2.5 text-right tabular-nums">
-                      {formatYen(exclusiveLines[i].amount)}
+                      {formatYen(item.quantity * item.unitPrice)}
                     </td>
                     <td className="py-2.5 text-right">
                       <DeleteButton

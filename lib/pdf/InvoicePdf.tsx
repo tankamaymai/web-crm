@@ -8,7 +8,7 @@ import {
 } from "@react-pdf/renderer";
 import {
   calcInvoiceTotals,
-  toExclusiveLines,
+  exclusiveUnitPrice,
   transitionalDeductionRate,
 } from "@/lib/invoice";
 import { formatDate } from "@/lib/dates";
@@ -282,11 +282,6 @@ export default function InvoicePdf({
     invoice.taxMode,
     invoice.issueDate
   );
-  const exclusiveLines = toExclusiveLines(
-    invoice.items,
-    invoice.taxRate,
-    subtotal
-  );
   const adjusted = invoice.taxMode !== "STANDARD" && adjustment !== 0;
   const deductionPercent = Math.round(
     transitionalDeductionRate(invoice.issueDate) * 100
@@ -391,17 +386,17 @@ export default function InvoicePdf({
             <Text style={styles.cellDesc}>摘要</Text>
             <Text style={styles.cellQty}>数量</Text>
             <Text style={styles.cellPrice}>単価(税抜)</Text>
-            <Text style={styles.cellAmount}>金額(税抜)</Text>
+            <Text style={styles.cellAmount}>金額(税込)</Text>
           </View>
-          {invoice.items.map((item, i) => (
+          {invoice.items.map((item) => (
             <View key={item.id} style={styles.tableRow}>
               <Text style={styles.cellDesc}>{item.description}</Text>
               <Text style={styles.cellQty}>{item.quantity}</Text>
               <Text style={styles.cellPrice}>
-                {yen(exclusiveLines[i].unitPrice)}
+                {yen(exclusiveUnitPrice(item.unitPrice, invoice.taxRate))}
               </Text>
               <Text style={styles.cellAmount}>
-                {yen(exclusiveLines[i].amount)}
+                {yen(item.quantity * item.unitPrice)}
               </Text>
             </View>
           ))}
