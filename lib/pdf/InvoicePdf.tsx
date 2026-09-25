@@ -6,7 +6,11 @@ import {
   Text,
   View,
 } from "@react-pdf/renderer";
-import { calcInvoiceTotals, transitionalDeductionRate } from "@/lib/invoice";
+import {
+  calcInvoiceTotals,
+  toExclusiveLines,
+  transitionalDeductionRate,
+} from "@/lib/invoice";
 import { formatDate } from "@/lib/dates";
 import type { Client, Invoice, InvoiceItem, Settings } from "@prisma/client";
 import path from "path";
@@ -278,6 +282,11 @@ export default function InvoicePdf({
     invoice.taxMode,
     invoice.issueDate
   );
+  const exclusiveLines = toExclusiveLines(
+    invoice.items,
+    invoice.taxRate,
+    subtotal
+  );
   const adjusted = invoice.taxMode !== "STANDARD" && adjustment !== 0;
   const deductionPercent = Math.round(
     transitionalDeductionRate(invoice.issueDate) * 100
@@ -381,16 +390,18 @@ export default function InvoicePdf({
           <View style={styles.tableHeader}>
             <Text style={styles.cellDesc}>摘要</Text>
             <Text style={styles.cellQty}>数量</Text>
-            <Text style={styles.cellPrice}>単価</Text>
-            <Text style={styles.cellAmount}>金額(税込)</Text>
+            <Text style={styles.cellPrice}>単価(税抜)</Text>
+            <Text style={styles.cellAmount}>金額(税抜)</Text>
           </View>
-          {invoice.items.map((item) => (
+          {invoice.items.map((item, i) => (
             <View key={item.id} style={styles.tableRow}>
               <Text style={styles.cellDesc}>{item.description}</Text>
               <Text style={styles.cellQty}>{item.quantity}</Text>
-              <Text style={styles.cellPrice}>{yen(item.unitPrice)}</Text>
+              <Text style={styles.cellPrice}>
+                {yen(exclusiveLines[i].unitPrice)}
+              </Text>
               <Text style={styles.cellAmount}>
-                {yen(item.quantity * item.unitPrice)}
+                {yen(exclusiveLines[i].amount)}
               </Text>
             </View>
           ))}
@@ -423,19 +434,21 @@ export default function InvoicePdf({
           </View>
 
           <View style={styles.sumBlock}>
+            <View style={styles.sumRow}>
+              <Text style={styles.sumLabel}>小計(税抜)</Text>
+              <Text style={styles.sumValue}>{yen(subtotal)}</Text>
+            </View>
+            <View style={styles.sumRow}>
+              <Text style={styles.sumLabel}>
+                {invoice.taxMode === "STANDARD" ? "消費税" : "消費税相当額"}
+              </Text>
+              <Text style={styles.sumValue}>{yen(taxAmount)}</Text>
+            </View>
             {adjusted && (
-              <>
-                <View style={styles.sumRow}>
-                  <Text style={styles.sumLabel}>小計(税込)</Text>
-                  <Text style={styles.sumValue}>
-                    {yen(subtotal + taxAmount)}
-                  </Text>
-                </View>
-                <View style={styles.sumRow}>
-                  <Text style={styles.sumLabel}>調整値引き</Text>
-                  <Text style={styles.sumValue}>-{yen(-adjustment)}</Text>
-                </View>
-              </>
+              <View style={styles.sumRow}>
+                <Text style={styles.sumLabel}>調整値引き</Text>
+                <Text style={styles.sumValue}>-{yen(-adjustment)}</Text>
+              </View>
             )}
             <View style={styles.sumRow}>
               <Text style={styles.sumLabel}>合計</Text>
