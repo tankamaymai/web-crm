@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { parseDateInput } from "@/lib/dates";
+import { PROJECT_STATUSES, type ProjectStatus } from "@/lib/status";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -66,6 +67,9 @@ export async function updateProject(id: string, formData: FormData) {
 
 export async function updateProjectStatus(id: string, status: string) {
   await requireAuth();
+  if (!PROJECT_STATUSES.includes(status as ProjectStatus)) {
+    throw new Error(`不正なステータスです: ${status}`);
+  }
   await prisma.project.update({ where: { id }, data: { status } });
   revalidatePath("/projects");
   revalidatePath(`/projects/${id}`);

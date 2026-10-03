@@ -7,7 +7,7 @@ import {
 import { formatYen } from "@/lib/dates";
 import { getSettings } from "@/lib/settings";
 import PageHeader from "@/components/PageHeader";
-import { ProjectStatusBadge } from "@/components/StatusBadge";
+import ProjectStatusSelect from "@/components/ProjectStatusSelect";
 import DueDateLabel from "@/components/DueDateLabel";
 import Link from "next/link";
 import type { Client, Project } from "@prisma/client";
@@ -274,7 +274,7 @@ export default async function ProjectsPage({
                     </td>
                     <td className="px-4 py-3 text-gray-600">{p.client.name}</td>
                     <td className="px-4 py-3">
-                      <ProjectStatusBadge status={p.status} />
+                      <ProjectStatusSelect projectId={p.id} status={p.status} />
                     </td>
                     <td className="px-4 py-3">
                       <DueDateLabel

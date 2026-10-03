@@ -5,7 +5,8 @@ import { calcInvoiceTotals } from "@/lib/invoice";
 import { toggleTask, deleteTask, createTask } from "@/app/actions/tasks";
 import { formatDate, formatYen } from "@/lib/dates";
 import PageHeader from "@/components/PageHeader";
-import { InvoiceStatusBadge, ProjectStatusBadge } from "@/components/StatusBadge";
+import { InvoiceStatusBadge } from "@/components/StatusBadge";
+import ProjectStatusSelect from "@/components/ProjectStatusSelect";
 import DueDateLabel from "@/components/DueDateLabel";
 import DeleteButton from "@/components/DeleteButton";
 import TaskCheckbox from "@/components/TaskCheckbox";
@@ -111,7 +112,7 @@ export default async function ProjectDetailPage({
               <div>
                 <dt className="text-gray-500">ステータス</dt>
                 <dd className="mt-0.5">
-                  <ProjectStatusBadge status={project.status} />
+                  <ProjectStatusSelect projectId={project.id} status={project.status} />
                 </dd>
               </div>
               <div>
