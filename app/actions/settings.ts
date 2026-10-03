@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import Anthropic from "@anthropic-ai/sdk";
 
 export async function updateSettings(formData: FormData) {
   await requireAuth();
@@ -27,4 +29,41 @@ export async function updateSettings(formData: FormData) {
   });
   revalidatePath("/settings");
   revalidatePath("/");
+}
+
+/** PDF書式のAI読み取りに使うClaude APIキーを登録する（実際に使えるか確認してから保存） */
+export async function saveAnthropicApiKey(formData: FormData) {
+  await requireAuth();
+  const apiKey = ((formData.get("apiKey") as string) || "").trim();
+  if (!apiKey.startsWith("sk-ant-")) redirect("/settings?ai=format#ai");
+
+  let result = "saved";
+  try {
+    await new Anthropic({ apiKey }).models.list({ limit: 1 });
+  } catch (e) {
+    result =
+      e instanceof Anthropic.AuthenticationError ||
+      e instanceof Anthropic.PermissionDeniedError
+        ? "invalid"
+        : "unreachable";
+  }
+  if (result === "saved") {
+    await prisma.settings.upsert({
+      where: { id: "default" },
+      update: { anthropicApiKey: apiKey },
+      create: { id: "default", anthropicApiKey: apiKey },
+    });
+    revalidatePath("/invoices/formats");
+  }
+  redirect(`/settings?ai=${result}#ai`);
+}
+
+export async function deleteAnthropicApiKey() {
+  await requireAuth();
+  await prisma.settings.update({
+    where: { id: "default" },
+    data: { anthropicApiKey: null },
+  });
+  revalidatePath("/invoices/formats");
+  redirect("/settings?ai=deleted#ai");
 }

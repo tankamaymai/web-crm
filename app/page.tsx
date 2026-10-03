@@ -5,7 +5,7 @@ import { calcInvoiceTotals } from "@/lib/invoice";
 import { getSettings } from "@/lib/settings";
 import { addMonths, formatYen, startOfMonth, todayJST } from "@/lib/dates";
 import { ACTIVE_PROJECT_STATUSES } from "@/lib/status";
-import { ProjectStatusBadge } from "@/components/StatusBadge";
+import ProjectStatusSelect from "@/components/ProjectStatusSelect";
 import DueDateLabel from "@/components/DueDateLabel";
 import TaskCheckbox from "@/components/TaskCheckbox";
 import MonthlyChart, {
@@ -434,7 +434,7 @@ export default async function DashboardPage() {
                     {p.title}
                   </Link>
                   <span className="text-gray-500">{p.client.name}</span>
-                  <ProjectStatusBadge status={p.status} />
+                  <ProjectStatusSelect projectId={p.id} status={p.status} />
                   <DueDateLabel dueDate={p.dueDate} />
                 </li>
               ))}

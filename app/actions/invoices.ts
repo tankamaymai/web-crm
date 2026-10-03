@@ -20,14 +20,17 @@ function revalidateInvoicePages(id?: string) {
   revalidatePath("/");
 }
 
-/** その顧客に前回使った宛名の敬称（初めての顧客は「様」） */
-async function lastHonorificFor(clientId: string) {
+/** その顧客の前回の請求書を引き継ぐ項目（宛名の敬称・PDFの書式） */
+async function lastInvoiceDefaults(clientId: string) {
   const last = await prisma.invoice.findFirst({
     where: { clientId },
     orderBy: { createdAt: "desc" },
-    select: { honorific: true },
+    select: { honorific: true, formatId: true },
   });
-  return parseHonorific(last?.honorific);
+  return {
+    honorific: parseHonorific(last?.honorific),
+    formatId: last?.formatId ?? null,
+  };
 }
 
 /** 案件からワンクリックで請求書を作成する */
@@ -48,7 +51,7 @@ export async function createInvoiceFromProject(projectId: string) {
       dueDate: endOfNextMonth(issueDate),
       taxRate: settings.defaultTaxRate,
       taxMode: project.client.taxMode,
-      honorific: await lastHonorificFor(project.clientId),
+      ...(await lastInvoiceDefaults(project.clientId)),
       notes: settings.invoiceNotes,
       items: {
         create: [
@@ -114,6 +117,7 @@ export async function createInvoice(formData: FormData) {
         ? taxMode
         : client.taxMode,
       honorific: parseHonorific(formData.get("honorific")),
+      formatId: (await lastInvoiceDefaults(clientId)).formatId,
       notes: (formData.get("notes") as string) || settings.invoiceNotes,
       items: { create: items },
     },
@@ -155,7 +159,7 @@ export async function generateMonthlyInvoices() {
         dueDate: endOfNextMonth(today),
         taxRate: settings.defaultTaxRate,
         taxMode: project.client.taxMode,
-        honorific: await lastHonorificFor(project.clientId),
+        ...(await lastInvoiceDefaults(project.clientId)),
         notes: settings.invoiceNotes,
         items: {
           create: [
@@ -193,6 +197,16 @@ export async function updateInvoice(id: string, formData: FormData) {
       notes: (formData.get("notes") as string) || null,
     },
   });
+  revalidateInvoicePages(id);
+}
+
+/** PDFの書式を切り替える（null ならアプリ標準の書式） */
+export async function setInvoiceFormat(id: string, formatId: string | null) {
+  await requireAuth();
+  if (formatId) {
+    await prisma.documentFormat.findUniqueOrThrow({ where: { id: formatId } });
+  }
+  await prisma.invoice.update({ where: { id }, data: { formatId } });
   revalidateInvoicePages(id);
 }
 

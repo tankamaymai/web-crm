@@ -1,6 +1,5 @@
 import {
   Document,
-  Font,
   Page,
   StyleSheet,
   Text,
@@ -14,21 +13,7 @@ import {
 } from "@/lib/invoice";
 import { formatDate } from "@/lib/dates";
 import type { Client, Invoice, InvoiceItem, Settings } from "@prisma/client";
-import path from "path";
-
-const fontDir = path.join(process.cwd(), "public", "fonts");
-
-Font.register({
-  family: "NotoSansJP",
-  fonts: [
-    { src: path.join(fontDir, "NotoSansJP-Regular.ttf"), fontWeight: "normal" },
-    { src: path.join(fontDir, "NotoSansJP-Bold.ttf"), fontWeight: "bold" },
-  ],
-});
-
-// 単語内で折り返すとreact-pdfがハイフンを挿入するため、単語単位を維持する。
-// 長文は表示側で行を分けること。
-Font.registerHyphenationCallback((word) => [word]);
+import "./fonts";
 
 const DARK = "#3f3f3f";
 const BORDER = "#8a8a8a";
