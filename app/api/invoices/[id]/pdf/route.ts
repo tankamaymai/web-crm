@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
-import InvoicePdf from "@/lib/pdf/InvoicePdf";
-import { renderToBuffer } from "@react-pdf/renderer";
+import { renderInvoicePdf } from "@/lib/pdf/renderInvoicePdf";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
 
@@ -15,16 +14,18 @@ export async function GET(
   const { id } = await params;
   const invoice = await prisma.invoice.findUnique({
     where: { id },
-    include: { client: true, items: { orderBy: { sortOrder: "asc" } } },
+    include: {
+      client: true,
+      items: { orderBy: { sortOrder: "asc" } },
+      format: true,
+    },
   });
   if (!invoice) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
   const settings = await getSettings();
 
-  const buffer = await renderToBuffer(
-    <InvoicePdf invoice={invoice} settings={settings} />
-  );
+  const buffer = await renderInvoicePdf(invoice, settings, invoice.format);
 
   // 保存時のファイル名: 「取引先名 御請求書 9月分.pdf」（月は発行日の月）
   const clientName = invoice.client.company || invoice.client.name;

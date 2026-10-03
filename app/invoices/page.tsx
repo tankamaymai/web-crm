@@ -70,6 +70,12 @@ export default async function InvoicesPage({
               📄 テンプレート
             </Link>
             <Link
+              href="/invoices/formats"
+              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+            >
+              🎨 書式
+            </Link>
+            <Link
               href="/invoices/new"
               className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
             >

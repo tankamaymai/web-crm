@@ -21,6 +21,7 @@ import CelebrateButton from "@/components/CelebrateButton";
 import SaveAsTemplateButton from "@/components/SaveAsTemplateButton";
 import DeleteButton from "@/components/DeleteButton";
 import TaxModeSelect from "@/components/TaxModeSelect";
+import InvoiceFormatSelect from "@/components/InvoiceFormatSelect";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireAuth } from "@/lib/auth";
@@ -45,6 +46,11 @@ export default async function InvoiceDetailPage({
     },
   });
   if (!invoice) notFound();
+
+  const formats = await prisma.documentFormat.findMany({
+    orderBy: { createdAt: "desc" },
+    select: { id: true, name: true },
+  });
 
   // 宛先顧客の案件（明細の紐付け先候補）
   const clientProjects = await prisma.project.findMany({
@@ -92,6 +98,13 @@ export default async function InvoiceDetailPage({
             >
               📄 PDFを開く
             </a>
+            {formats.length > 0 && (
+              <InvoiceFormatSelect
+                invoiceId={invoice.id}
+                formatId={invoice.formatId}
+                formats={formats}
+              />
+            )}
             {invoice.status === "DRAFT" && (
               <form action={setInvoiceStatus.bind(null, invoice.id, "SENT")}>
                 <button

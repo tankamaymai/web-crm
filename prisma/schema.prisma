@@ -96,6 +96,9 @@ model Invoice {
   taxRate       Int           @default(10) // 消費税率（%）
   taxMode       String        @default("STANDARD") // STANDARD, ADJUSTED_DISCOUNT, ADJUSTED_EXACT
   honorific     String        @default("様") // 宛名の敬称: 様 / 御中
+  // PDFの書式。未設定ならアプリ標準の書式で出力する
+  formatId      String?
+  format        DocumentFormat? @relation(fields: [formatId], references: [id], onDelete: SetNull)
   notes         String?
   paidAt        DateTime?
   createdAt     DateTime      @default(now())
@@ -136,6 +139,17 @@ model InvoiceTemplateItem {
   quantity    Int             @default(1)
   unitPrice   Int             @default(0) // 税込・円
   sortOrder   Int             @default(0)
+}
+
+/// アップロードしたPDFからAIで読み取った書類の書式（見た目）
+model DocumentFormat {
+  id             String    @id @default(cuid())
+  name           String
+  layout         Json // lib/documentFormat.ts の DocumentLayout
+  sourceFileName String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  invoices       Invoice[]
 }
 
 model Settings {
