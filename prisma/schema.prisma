@@ -95,6 +95,7 @@ model Invoice {
   dueDate       DateTime?
   taxRate       Int           @default(10) // 消費税率（%）
   taxMode       String        @default("STANDARD") // STANDARD, ADJUSTED_DISCOUNT, ADJUSTED_EXACT
+  honorific     String        @default("様") // 宛名の敬称: 様 / 御中
   notes         String?
   paidAt        DateTime?
   createdAt     DateTime      @default(now())

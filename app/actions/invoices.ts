@@ -9,7 +9,7 @@ import {
   startOfMonth,
   todayJST,
 } from "@/lib/dates";
-import { nextInvoiceNumber, TAX_MODES } from "@/lib/invoice";
+import { nextInvoiceNumber, parseHonorific, TAX_MODES } from "@/lib/invoice";
 import { getSettings } from "@/lib/settings";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -18,6 +18,16 @@ function revalidateInvoicePages(id?: string) {
   revalidatePath("/invoices");
   if (id) revalidatePath(`/invoices/${id}`);
   revalidatePath("/");
+}
+
+/** その顧客に前回使った宛名の敬称（初めての顧客は「様」） */
+async function lastHonorificFor(clientId: string) {
+  const last = await prisma.invoice.findFirst({
+    where: { clientId },
+    orderBy: { createdAt: "desc" },
+    select: { honorific: true },
+  });
+  return parseHonorific(last?.honorific);
 }
 
 /** 案件からワンクリックで請求書を作成する */
@@ -38,6 +48,7 @@ export async function createInvoiceFromProject(projectId: string) {
       dueDate: endOfNextMonth(issueDate),
       taxRate: settings.defaultTaxRate,
       taxMode: project.client.taxMode,
+      honorific: await lastHonorificFor(project.clientId),
       notes: settings.invoiceNotes,
       items: {
         create: [
@@ -102,6 +113,7 @@ export async function createInvoice(formData: FormData) {
       taxMode: TAX_MODES.includes(taxMode as (typeof TAX_MODES)[number])
         ? taxMode
         : client.taxMode,
+      honorific: parseHonorific(formData.get("honorific")),
       notes: (formData.get("notes") as string) || settings.invoiceNotes,
       items: { create: items },
     },
@@ -143,6 +155,7 @@ export async function generateMonthlyInvoices() {
         dueDate: endOfNextMonth(today),
         taxRate: settings.defaultTaxRate,
         taxMode: project.client.taxMode,
+        honorific: await lastHonorificFor(project.clientId),
         notes: settings.invoiceNotes,
         items: {
           create: [
@@ -176,6 +189,7 @@ export async function updateInvoice(id: string, formData: FormData) {
       taxMode: TAX_MODES.includes(taxMode as (typeof TAX_MODES)[number])
         ? taxMode
         : "STANDARD",
+      honorific: parseHonorific(formData.get("honorific")),
       notes: (formData.get("notes") as string) || null,
     },
   });
