@@ -15,6 +15,33 @@ export async function nextInvoiceNumber(): Promise<string> {
   return `${prefix}${String(lastSeq + 1).padStart(3, "0")}`;
 }
 
+// ---- 宛名の敬称 ----
+
+export const HONORIFICS = ["様", "御中"] as const;
+
+export type Honorific = (typeof HONORIFICS)[number];
+
+export function parseHonorific(value: unknown): Honorific {
+  return value === "御中" ? "御中" : "様";
+}
+
+/**
+ * 請求書の宛名。
+ * 様:   「会社名 担当者名 様」（会社名がなければ「担当者名 様」）
+ * 御中: 「会社名 御中」（会社宛て。会社名がなければ顧客名を使う）
+ */
+export function recipientLabel(
+  client: { name: string; company: string | null },
+  honorific: string
+): string {
+  if (honorific === "御中") {
+    return `${client.company || client.name} 御中`;
+  }
+  return client.company
+    ? `${client.company} ${client.name} 様`
+    : `${client.name} 様`;
+}
+
 // ---- 消費税の計算モード ----
 //
 // インボイス未登録（免税事業者）の場合、買い手は消費税の全額を仕入税額控除

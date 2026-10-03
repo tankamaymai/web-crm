@@ -10,6 +10,8 @@ import {
 import {
   calcInvoiceTotals,
   exclusiveUnitPrice,
+  HONORIFICS,
+  recipientLabel,
   transitionalDeductionRate,
 } from "@/lib/invoice";
 import { formatDate, formatYen, toDateInputValue } from "@/lib/dates";
@@ -320,8 +322,7 @@ export default async function InvoiceDetailPage({
               <div>
                 <dt className="text-gray-500">宛先</dt>
                 <dd className="font-medium">
-                  {invoice.client.name}
-                  {invoice.client.company && ` / ${invoice.client.company}`}
+                  {recipientLabel(invoice.client, invoice.honorific)}
                 </dd>
               </div>
               {linkedProjects.length > 0 && (
@@ -356,6 +357,20 @@ export default async function InvoiceDetailPage({
               action={updateInvoice.bind(null, invoice.id)}
               className="space-y-3"
             >
+              <label className="block">
+                <span className="text-sm text-gray-600">宛名の敬称</span>
+                <select
+                  name="honorific"
+                  defaultValue={invoice.honorific}
+                  className={inputClass}
+                >
+                  {HONORIFICS.map((h) => (
+                    <option key={h} value={h}>
+                      {h}（{recipientLabel(invoice.client, h)}）
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="block">
                 <span className="text-sm text-gray-600">発行日</span>
                 <input

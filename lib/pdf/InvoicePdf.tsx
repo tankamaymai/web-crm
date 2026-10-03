@@ -9,6 +9,7 @@ import {
 import {
   calcInvoiceTotals,
   exclusiveUnitPrice,
+  recipientLabel,
   transitionalDeductionRate,
 } from "@/lib/invoice";
 import { formatDate } from "@/lib/dates";
@@ -286,9 +287,7 @@ export default function InvoicePdf({
   const deductionPercent = Math.round(
     transitionalDeductionRate(invoice.issueDate) * 100
   );
-  const clientLabel = invoice.client.company
-    ? `${invoice.client.company} ${invoice.client.name} 様`
-    : `${invoice.client.name} 様`;
+  const clientLabel = recipientLabel(invoice.client, invoice.honorific);
   const bankLines = (settings.bankInfo ?? "").split("\n").filter(Boolean);
 
   // 税率別内訳（10% / 軽減8% / 0% の3行。それ以外の税率は1行目を置き換える）

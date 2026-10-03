@@ -16,7 +16,8 @@ export const dynamic = "force-dynamic";
 export default async function NewInvoicePage() {
   await requireAuth();
   const today = todayJST();
-  const [settings, clients, projects, templates] = await Promise.all([
+  const [settings, clients, projects, templates, recentInvoices] =
+    await Promise.all([
     getSettings(),
     prisma.client.findMany({ orderBy: { name: "asc" } }),
     prisma.project.findMany({
@@ -28,13 +29,23 @@ export default async function NewInvoicePage() {
       orderBy: { sortOrder: "asc" },
       include: { items: { orderBy: { sortOrder: "asc" } } },
     }),
+    // 顧客ごとに前回使った宛名の敬称を引き継ぐため、最新の請求書を顧客単位で取る
+    prisma.invoice.findMany({
+      distinct: ["clientId"],
+      orderBy: { createdAt: "desc" },
+      select: { clientId: true, honorific: true },
+    }),
   ]);
+  const lastHonorific = new Map(
+    recentInvoices.map((inv) => [inv.clientId, inv.honorific])
+  );
 
   const composerClients: ComposerClient[] = clients.map((c) => ({
     id: c.id,
     name: c.name,
     company: c.company,
     taxMode: c.taxMode,
+    honorific: lastHonorific.get(c.id) ?? "様",
   }));
 
   const composerProjects: ComposerProject[] = projects.map((p) => ({

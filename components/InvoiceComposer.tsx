@@ -3,13 +3,20 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { createInvoice } from "@/app/actions/invoices";
-import { TAX_MODES, TAX_MODE_LABELS } from "@/lib/invoice";
+import {
+  HONORIFICS,
+  recipientLabel,
+  TAX_MODES,
+  TAX_MODE_LABELS,
+} from "@/lib/invoice";
 
 export type ComposerClient = {
   id: string;
   name: string;
   company: string | null;
   taxMode: string;
+  /** 前回この顧客に使った宛名の敬称（初回は「様」） */
+  honorific: string;
 };
 
 export type ComposerTemplate = {
@@ -71,8 +78,10 @@ export default function InvoiceComposer({
   defaultNotes: string;
 }) {
   const [clientId, setClientId] = useState("");
+  const selectedClient = clients.find((c) => c.id === clientId);
   const [taxRate, setTaxRate] = useState(defaultTaxRate);
   const [taxMode, setTaxMode] = useState("STANDARD");
+  const [honorific, setHonorific] = useState("様");
   const [rows, setRows] = useState<Row[]>([emptyRow()]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
@@ -94,7 +103,10 @@ export default function InvoiceComposer({
   const handleClientChange = (id: string) => {
     setClientId(id);
     const client = clients.find((c) => c.id === id);
-    if (client) setTaxMode(client.taxMode);
+    if (client) {
+      setTaxMode(client.taxMode);
+      setHonorific(client.honorific);
+    }
     // 顧客が変わると案件の紐付けが無効になるので外す
     setRows((prev) => prev.map((r) => ({ ...r, projectId: "" })));
   };
@@ -161,6 +173,26 @@ export default function InvoiceComposer({
                 </option>
               ))}
             </select>
+          </label>
+          <label className="block sm:col-span-2">
+            <span className={labelClass}>宛名の敬称</span>
+            <select
+              name="honorific"
+              value={honorific}
+              onChange={(e) => setHonorific(e.target.value)}
+              className={inputClass}
+            >
+              {HONORIFICS.map((h) => (
+                <option key={h} value={h}>
+                  {selectedClient
+                    ? `${h}（${recipientLabel(selectedClient, h)}）`
+                    : h}
+                </option>
+              ))}
+            </select>
+            <span className="mt-1 block text-xs text-gray-400">
+              会社宛てなら「御中」、担当者宛てなら「様」。顧客を選ぶと前回の敬称が入ります
+            </span>
           </label>
           <label className="block">
             <span className={labelClass}>発行日</span>
