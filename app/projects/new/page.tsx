@@ -56,9 +56,12 @@ export default async function NewProjectPage({
 
   return (
     <div>
-      <PageHeader title={source ? "新規案件（コピー）" : "新規案件"} />
+      <PageHeader
+        title={source ? "新規案件（コピー）" : "新規案件"}
+        back={{ href: "/projects", label: "案件一覧" }}
+      />
       {clients.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center text-gray-500">
+        <div className="card p-8 text-center text-gray-500">
           先に顧客を登録してください。
           <Link href="/clients" className="text-sky-600 hover:underline ml-2">
             顧客登録へ
@@ -67,7 +70,7 @@ export default async function NewProjectPage({
       ) : (
         <div className="max-w-3xl">
           {!source && <ProjectCopyPicker sources={copySources} />}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="card p-6">
             <ProjectForm
               action={createProject}
               clients={clients}

@@ -38,7 +38,7 @@ export default async function SetupPage({
 
         <form
           action={setupPassword}
-          className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+          className="card p-6"
         >
           <label className="block">
             <span className="text-sm text-gray-600">パスワード（6文字以上）</span>
@@ -72,7 +72,7 @@ export default async function SetupPage({
 
           <button
             type="submit"
-            className="mt-4 w-full rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700"
+            className="btn-primary mt-4 w-full py-2.5"
           >
             この内容ではじめる
           </button>

@@ -27,7 +27,7 @@ export default function SaveAsTemplateButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+        className="btn-secondary"
       >
         📄 テンプレートとして保存
       </button>
@@ -56,7 +56,7 @@ export default function SaveAsTemplateButton({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-40"
+        className="btn-primary px-3 py-2"
       >
         {pending ? "保存中..." : "保存"}
       </button>

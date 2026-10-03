@@ -61,23 +61,24 @@ export default async function InvoicesPage({
     <div>
       <PageHeader
         title="請求書"
+        description="作成した請求書の一覧です。番号をクリックすると、PDFの確認や入金の記録ができます。"
         action={
           <div className="flex flex-wrap gap-2">
             <Link
               href="/invoices/templates"
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+              className="btn-secondary"
             >
               📄 テンプレート
             </Link>
             <Link
               href="/invoices/formats"
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+              className="btn-secondary"
             >
               🎨 書式
             </Link>
             <Link
               href="/invoices/new"
-              className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+              className="btn-primary"
             >
               + 新規請求書
             </Link>
@@ -118,9 +119,58 @@ export default async function InvoicesPage({
         ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+      {/* スマホ: 1枚1カードで表示 */}
+      <ul className="space-y-3 sm:hidden">
+        {invoices.length === 0 && (
+          <li className="card px-4 py-8 text-center text-gray-500">
+            請求書はありません。「+ 新規請求書」から作成できます。
+          </li>
+        )}
+        {invoices.map((inv) => {
+          const isOverdue =
+            inv.status === "SENT" && inv.dueDate && inv.dueDate < today;
+          return (
+            <li key={inv.id} className="card p-4">
+              <Link href={`/invoices/${inv.id}`} className="block">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-sky-700">
+                    {inv.invoiceNumber}
+                  </span>
+                  <InvoiceStatusBadge status={inv.status} />
+                </div>
+                <div className="mt-1 flex items-end justify-between gap-2">
+                  <div className="min-w-0 text-sm">
+                    <p className="truncate text-gray-800">
+                      {inv.client.company || inv.client.name}
+                    </p>
+                    <p className={isOverdue ? "font-semibold text-red-600" : "text-gray-500"}>
+                      支払期限 {formatDate(inv.dueDate)}
+                      {isOverdue && "（超過）"}
+                    </p>
+                  </div>
+                  <span className="text-lg font-bold tabular-nums">
+                    {formatYen(totalOf(inv))}
+                  </span>
+                </div>
+              </Link>
+              {inv.status === "SENT" && (
+                <form
+                  action={setInvoiceStatus.bind(null, inv.id, "PAID")}
+                  className="mt-3"
+                >
+                  <CelebrateButton className="btn-success w-full">
+                    入金済みにする
+                  </CelebrateButton>
+                </form>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="card hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[900px] whitespace-nowrap text-sm">
-          <thead className="bg-gray-50 text-left text-xs text-gray-400">
+          <thead className="bg-gray-50 text-left text-xs text-gray-500">
             <tr>
               <th className="px-4 py-3 font-medium">請求書番号</th>
               <th className="px-4 py-3 font-medium">宛先</th>
@@ -202,7 +252,7 @@ export default async function InvoicesPage({
                         action={setInvoiceStatus.bind(null, inv.id, "PAID")}
                         className="inline"
                       >
-                        <CelebrateButton className="text-xs rounded-lg bg-emerald-600 text-white px-2.5 py-1 hover:bg-emerald-700">
+                        <CelebrateButton className="btn-success px-3 py-1 text-xs">
                           入金済みにする
                         </CelebrateButton>
                       </form>

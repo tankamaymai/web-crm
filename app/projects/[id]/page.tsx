@@ -64,25 +64,26 @@ export default async function ProjectDetailPage({
     <div>
       <PageHeader
         title={project.title}
+        back={{ href: "/projects", label: "案件一覧" }}
         action={
-          <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex flex-wrap gap-2 items-center">
             <form action={createInvoiceFromProject.bind(null, project.id)}>
               <button
                 type="submit"
-                className="rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700"
+                className="btn-primary"
               >
                 🧾 請求書を発行
               </button>
             </form>
             <Link
               href={`/projects/new?from=${project.id}`}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+              className="btn-secondary"
             >
               📋 コピーして新規作成
             </Link>
             <Link
               href={`/projects/${project.id}/edit`}
-              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+              className="btn-secondary"
             >
               編集
             </Link>
@@ -96,7 +97,7 @@ export default async function ProjectDetailPage({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="card p-6">
             <dl className="grid grid-cols-1 gap-x-6 gap-y-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-gray-500">顧客</dt>
@@ -187,7 +188,7 @@ export default async function ProjectDetailPage({
 
           <ProjectNotes projectId={project.id} notes={checkNotes} />
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="card p-6">
             <h2 className="font-bold mb-4">タスク</h2>
             <ul className="space-y-2 mb-4">
               {project.tasks.length === 0 && (
@@ -242,7 +243,7 @@ export default async function ProjectDetailPage({
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="card p-6">
             <h2 className="font-bold mb-4">この案件の請求書</h2>
             <ul className="space-y-3">
               {invoices.length === 0 && (

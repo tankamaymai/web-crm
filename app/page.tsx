@@ -14,6 +14,7 @@ import MonthlyChart, {
 } from "@/components/MonthlyChart";
 import GoalGauge from "@/components/GoalGauge";
 import Link from "next/link";
+import PageHeader from "@/components/PageHeader";
 import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +37,7 @@ function StatCard({
         ? "text-amber-700"
         : "text-slate-800";
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+    <div className="card p-5">
       <p className="text-sm text-gray-500">{label}</p>
       <p className={`mt-1 text-2xl font-bold tabular-nums ${accentClass}`}>
         {value}
@@ -69,6 +70,41 @@ function PipelineStage({
   );
 }
 
+/** 「今やること」の1項目。件数があるときだけ色を付けて目立たせる */
+function ActionCard({
+  href,
+  label,
+  count,
+  unit,
+  tone,
+}: {
+  href: string;
+  label: string;
+  count: number;
+  unit: string;
+  tone: "red" | "amber";
+}) {
+  const active = count > 0;
+  const toneClass = !active
+    ? "border-gray-200 bg-white text-gray-500"
+    : tone === "red"
+      ? "border-red-300 bg-red-50 text-red-800 hover:bg-red-100"
+      : "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100";
+  return (
+    <Link
+      href={href}
+      className={`flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-3 transition-colors ${toneClass}`}
+    >
+      <span className="text-sm font-semibold">{label}</span>
+      <span className="flex items-baseline gap-0.5">
+        <span className="text-2xl font-extrabold tabular-nums">{count}</span>
+        <span className="text-xs font-medium">{unit}</span>
+        {active && <span className="ml-1.5 text-sm">→</span>}
+      </span>
+    </Link>
+  );
+}
+
 export default async function DashboardPage() {
   await requireAuth();
   const today = todayJST();
@@ -86,6 +122,10 @@ export default async function DashboardPage() {
     recurringUnbilled,
     todayTasks,
     upcomingProjects,
+    overdueTaskCount,
+    overdueProjectCount,
+    overdueInvoiceCount,
+    draftInvoiceCount,
   ] = await Promise.all([
     getSettings(),
     // 売上請求書 = 発行済み(SENT) + 入金済み(PAID)。発行日基準で集計する。
@@ -139,6 +179,12 @@ export default async function DashboardPage() {
       orderBy: { dueDate: "asc" },
       take: 5,
     }),
+    prisma.task.count({ where: { completed: false, dueDate: { lt: today } } }),
+    prisma.project.count({
+      where: { status: { in: ACTIVE_PROJECT_STATUSES }, dueDate: { lt: today } },
+    }),
+    prisma.invoice.count({ where: { status: "SENT", dueDate: { lt: today } } }),
+    prisma.invoice.count({ where: { status: "DRAFT" } }),
   ]);
 
   const totalOf = (
@@ -280,16 +326,58 @@ export default async function DashboardPage() {
     return row;
   });
 
+  const weekday = ["日", "月", "火", "水", "木", "金", "土"][today.getUTCDay()];
+  const nothingToDo =
+    overdueTaskCount +
+      overdueProjectCount +
+      overdueInvoiceCount +
+      draftInvoiceCount +
+      recurringUnbilled.length ===
+    0;
+
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">ダッシュボード</h1>
-
-      <GoalGauge
-        goal={settings.monthlyGoal}
-        achieved={thisMonthTotal}
-        potential={activeUnbilledTotal + recurringUnbilledTotal}
-        monthLabel={`${today.getUTCMonth() + 1}月`}
+      <PageHeader
+        title="ダッシュボード"
+        description={`${today.getUTCMonth() + 1}月${today.getUTCDate()}日（${weekday}）の状況です。上から順に片付けていきましょう。`}
       />
+
+      {/* 今やること: 期限切れ・未処理の件数をまとめて、ワンタップで該当画面へ */}
+      <section className="mb-6">
+        <h2 className="mb-2 text-sm font-bold text-gray-700">
+          {nothingToDo ? "✅ 今すぐやることはありません" : "⚡ 今やること"}
+        </h2>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <ActionCard
+            href="/tasks"
+            label="期日を過ぎたタスク"
+            count={overdueTaskCount}
+            unit="件"
+            tone="red"
+          />
+          <ActionCard
+            href="/projects"
+            label="期日を過ぎた案件"
+            count={overdueProjectCount}
+            unit="件"
+            tone="red"
+          />
+          <ActionCard
+            href="/invoices?status=SENT"
+            label="入金が遅れている請求書"
+            count={overdueInvoiceCount}
+            unit="件"
+            tone="red"
+          />
+          <ActionCard
+            href="/invoices?status=DRAFT"
+            label="未発行（下書き）の請求書"
+            count={draftInvoiceCount}
+            unit="件"
+            tone="amber"
+          />
+        </div>
+      </section>
 
       {/* 月額案件の請求リマインダー */}
       {recurringUnbilled.length > 0 && (
@@ -333,6 +421,93 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="card p-5 lg:col-span-2">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <h2 className="card-title">期日が近い案件</h2>
+              <span className="text-xs rounded-full bg-blue-100 text-blue-700 px-2.5 py-0.5">
+                進行中 {activeProjectCount}件
+              </span>
+            </div>
+            <Link
+              href="/projects"
+              className="text-sm text-sky-600 hover:underline"
+            >
+              すべて見る →
+            </Link>
+          </div>
+          <ul className="divide-y divide-gray-100">
+            {upcomingProjects.length === 0 && (
+              <li className="py-3 text-sm text-gray-400">
+                期日が設定された進行中の案件はありません
+              </li>
+            )}
+            {upcomingProjects.map((p) => (
+              <li
+                key={p.id}
+                className="py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
+              >
+                <Link
+                  href={`/projects/${p.id}`}
+                  className="font-medium text-sky-700 hover:underline min-w-0 basis-full truncate sm:basis-auto sm:flex-1"
+                >
+                  {p.title}
+                </Link>
+                <span className="text-gray-500">{p.client.name}</span>
+                <ProjectStatusSelect projectId={p.id} status={p.status} />
+                <DueDateLabel dueDate={p.dueDate} />
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="card p-5 self-start">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="card-title">今日までのタスク</h2>
+            <Link href="/tasks" className="text-sm text-sky-600 hover:underline">
+              すべて見る →
+            </Link>
+          </div>
+          <ul className="space-y-2.5">
+            {todayTasks.length === 0 && (
+              <li className="text-sm text-gray-400">
+                今日までのタスクはありません 🎉
+              </li>
+            )}
+            {todayTasks.map((task) => (
+              <li key={task.id} className="flex items-start gap-2.5 text-sm">
+                <TaskCheckbox
+                  checked={task.completed}
+                  action={toggleTask.bind(null, task.id)}
+                />
+                <div className="min-w-0">
+                  <p>{task.title}</p>
+                  <div className="flex gap-2 text-xs text-gray-400">
+                    {task.project && (
+                      <Link
+                        href={`/projects/${task.project.id}`}
+                        className="text-sky-600 hover:underline truncate"
+                      >
+                        {task.project.title}
+                      </Link>
+                    )}
+                    <DueDateLabel dueDate={task.dueDate} />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <h2 className="mb-3 text-lg font-extrabold text-gray-900">売上</h2>
+      <GoalGauge
+        goal={settings.monthlyGoal}
+        achieved={thisMonthTotal}
+        potential={activeUnbilledTotal + recurringUnbilledTotal}
+        monthLabel={`${today.getUTCMonth() + 1}月`}
+      />
+
       <div className="grid grid-cols-1 gap-4 mb-6 sm:grid-cols-3">
         <StatCard
           label="今月の売上"
@@ -353,9 +528,9 @@ export default async function DashboardPage() {
       </div>
 
       {/* 売上パイプライン: 見込み→進行中→請求済み→入金済み（すべて税込） */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 mb-6">
+      <div className="card p-5 mb-6">
         <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-          <h2 className="font-bold">売上パイプライン</h2>
+          <h2 className="card-title">売上パイプライン</h2>
           <div className="sm:text-right">
             <span className="text-sm text-gray-500 mr-2">着地見込み合計</span>
             <span className="text-2xl font-bold tabular-nums text-slate-800">
@@ -394,91 +569,9 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <h2 className="font-bold mb-3">月別売上（発行ベース・直近12ヶ月）</h2>
-            <MonthlyChart data={monthlyData} series={chartSeries} />
-          </div>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <h2 className="font-bold">期日が近い案件</h2>
-                <span className="text-xs rounded-full bg-blue-100 text-blue-700 px-2.5 py-0.5">
-                  進行中 {activeProjectCount}件
-                </span>
-              </div>
-              <Link
-                href="/projects"
-                className="text-sm text-sky-600 hover:underline"
-              >
-                すべて見る →
-              </Link>
-            </div>
-            <ul className="divide-y divide-gray-100">
-              {upcomingProjects.length === 0 && (
-                <li className="py-3 text-sm text-gray-400">
-                  期日が設定された進行中の案件はありません
-                </li>
-              )}
-              {upcomingProjects.map((p) => (
-                <li
-                  key={p.id}
-                  className="py-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm"
-                >
-                  <Link
-                    href={`/projects/${p.id}`}
-                    className="font-medium text-sky-700 hover:underline min-w-0 basis-full truncate sm:basis-auto sm:flex-1"
-                  >
-                    {p.title}
-                  </Link>
-                  <span className="text-gray-500">{p.client.name}</span>
-                  <ProjectStatusSelect projectId={p.id} status={p.status} />
-                  <DueDateLabel dueDate={p.dueDate} />
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 self-start">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-bold">今日のタスク</h2>
-            <Link href="/tasks" className="text-sm text-sky-600 hover:underline">
-              すべて見る →
-            </Link>
-          </div>
-          <ul className="space-y-2.5">
-            {todayTasks.length === 0 && (
-              <li className="text-sm text-gray-400">
-                今日のタスクはありません 🎉
-              </li>
-            )}
-            {todayTasks.map((task) => (
-              <li key={task.id} className="flex items-start gap-2.5 text-sm">
-                <TaskCheckbox
-                  checked={task.completed}
-                  action={toggleTask.bind(null, task.id)}
-                />
-                <div className="min-w-0">
-                  <p>{task.title}</p>
-                  <div className="flex gap-2 text-xs text-gray-400">
-                    {task.project && (
-                      <Link
-                        href={`/projects/${task.project.id}`}
-                        className="text-sky-600 hover:underline truncate"
-                      >
-                        {task.project.title}
-                      </Link>
-                    )}
-                    <DueDateLabel dueDate={task.dueDate} />
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
+      <div className="card p-5">
+        <h2 className="card-title mb-3">月別売上（発行ベース・直近12ヶ月）</h2>
+        <MonthlyChart data={monthlyData} series={chartSeries} />
       </div>
     </div>
   );

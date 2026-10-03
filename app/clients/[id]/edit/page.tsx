@@ -20,8 +20,11 @@ export default async function ClientEditPage({
 
   return (
     <div>
-      <PageHeader title="顧客を編集" />
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
+      <PageHeader
+        title="顧客を編集"
+        back={{ href: "/clients", label: "顧客一覧" }}
+      />
+      <div className="card p-6 max-w-2xl">
         <form action={updateClient.bind(null, client.id)} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="text-sm text-gray-600">顧客名 *</span>
@@ -75,7 +78,7 @@ export default async function ClientEditPage({
           <div className="flex gap-3 sm:col-span-2">
             <button
               type="submit"
-              className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
+              className="btn-primary"
             >
               保存する
             </button>
