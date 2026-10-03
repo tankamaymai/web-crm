@@ -3,6 +3,8 @@
 import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { DocumentFormatError, readDocumentFormat } from "@/lib/ai/readDocumentFormat";
+import { getSettings } from "@/lib/settings";
+import { normalizeLayout } from "@/lib/documentFormat";
 import { revalidatePath } from "next/cache";
 
 // next.config.ts の serverActions.bodySizeLimit（6mb）より少し小さくしておく
@@ -31,8 +33,18 @@ export async function importDocumentFormat(
     return { error: "PDFファイルとして読み込めませんでした。" };
   }
 
+  // 設定画面で登録したAPIキーを優先し、無ければ環境変数を使う
+  const apiKey =
+    (await getSettings()).anthropicApiKey || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
+    return {
+      error:
+        "APIキーが未登録です。設定画面でAPIキーを登録するか、下の「貼り付けで登録」を使ってください。",
+    };
+  }
+
   try {
-    const { layout } = await readDocumentFormat(buffer);
+    const { layout } = await readDocumentFormat(buffer, apiKey);
     const name =
       ((formData.get("name") as string) || "").trim() ||
       file.name.replace(/\.pdf$/i, "") ||
@@ -47,6 +59,45 @@ export async function importDocumentFormat(
     console.error(e);
     return { error: "取り込みに失敗しました。もう一度お試しください。" };
   }
+}
+
+/** チャット欄の文章からJSON部分（{ 〜 }）を取り出す。```json の囲みや前後の説明文があってもよい */
+function extractJson(text: string): unknown {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  const body = fenced ? fenced[1] : text;
+  const start = body.indexOf("{");
+  const end = body.lastIndexOf("}");
+  if (start === -1 || end <= start) return null;
+  try {
+    return JSON.parse(body.slice(start, end + 1));
+  } catch {
+    return null;
+  }
+}
+
+/** claude.ai などで読み取ってもらったJSONを貼り付けて書式として保存する（APIキー不要） */
+export async function importDocumentFormatFromText(
+  _prev: ImportFormatState,
+  formData: FormData
+): Promise<ImportFormatState> {
+  await requireAuth();
+  const text = ((formData.get("json") as string) || "").trim();
+  if (!text) return { error: "AIから返ってきた内容を貼り付けてください。" };
+  const parsed = extractJson(text);
+  if (!parsed || typeof parsed !== "object") {
+    return {
+      error:
+        "書式データを読み取れませんでした。AIの返答を { から } までまるごと貼り付けてください。",
+    };
+  }
+  const layout = normalizeLayout(parsed);
+  const name =
+    ((formData.get("name") as string) || "").trim() || layout.documentTitle;
+  const format = await prisma.documentFormat.create({
+    data: { name, layout },
+  });
+  revalidatePath("/invoices/formats");
+  return { createdId: format.id };
 }
 
 export async function renameDocumentFormat(id: string, formData: FormData) {

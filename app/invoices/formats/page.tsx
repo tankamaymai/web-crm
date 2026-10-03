@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import PageHeader from "@/components/PageHeader";
 import DocumentFormatUploader from "@/components/DocumentFormatUploader";
+import DocumentFormatPaste from "@/components/DocumentFormatPaste";
+import { getSettings } from "@/lib/settings";
 import DeleteButton from "@/components/DeleteButton";
 import {
   deleteDocumentFormat,
@@ -16,6 +18,10 @@ export const maxDuration = 300;
 
 export default async function DocumentFormatsPage() {
   await requireAuth();
+  const settings = await getSettings();
+  const hasApiKey = Boolean(
+    settings.anthropicApiKey || process.env.ANTHROPIC_API_KEY
+  );
   const formats = await prisma.documentFormat.findMany({
     orderBy: { createdAt: "desc" },
     include: { _count: { select: { invoices: true } } },
@@ -39,7 +45,8 @@ export default async function DocumentFormatsPage() {
       </p>
 
       <div className="max-w-3xl space-y-6">
-        <DocumentFormatUploader />
+        <DocumentFormatUploader hasApiKey={hasApiKey} />
+        <DocumentFormatPaste />
 
         <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
           <h2 className="border-b border-gray-100 px-5 py-3 font-semibold">
