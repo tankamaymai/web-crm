@@ -16,7 +16,6 @@ import {
 } from "@/lib/invoice";
 import { formatDate, formatYen, toDateInputValue } from "@/lib/dates";
 import PageHeader from "@/components/PageHeader";
-import { InvoiceStatusBadge } from "@/components/StatusBadge";
 import CelebrateButton from "@/components/CelebrateButton";
 import SaveAsTemplateButton from "@/components/SaveAsTemplateButton";
 import DeleteButton from "@/components/DeleteButton";
@@ -27,6 +26,12 @@ import Link from "next/link";
 import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
+
+const INVOICE_STEPS = [
+  { key: "DRAFT", label: "下書き" },
+  { key: "SENT", label: "発行済" },
+  { key: "PAID", label: "入金済" },
+];
 
 export default async function InvoiceDetailPage({
   params,
@@ -88,13 +93,15 @@ export default async function InvoiceDetailPage({
     <div>
       <PageHeader
         title={`請求書 ${invoice.invoiceNumber}`}
+        description={recipientLabel(invoice.client, invoice.honorific)}
+        back={{ href: "/invoices", label: "請求書一覧" }}
         action={
-          <div className="flex flex-wrap gap-3 items-center">
+          <div className="flex flex-wrap gap-2 items-center">
             <a
               href={`/api/invoices/${invoice.id}/pdf`}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
+              className="btn-secondary"
             >
               📄 PDFを開く
             </a>
@@ -104,23 +111,6 @@ export default async function InvoiceDetailPage({
                 formatId={invoice.formatId}
                 formats={formats}
               />
-            )}
-            {invoice.status === "DRAFT" && (
-              <form action={setInvoiceStatus.bind(null, invoice.id, "SENT")}>
-                <button
-                  type="submit"
-                  className="rounded-lg bg-amber-500 text-white px-4 py-2 text-sm font-medium hover:bg-amber-600"
-                >
-                  発行済みにする
-                </button>
-              </form>
-            )}
-            {invoice.status === "SENT" && (
-              <form action={setInvoiceStatus.bind(null, invoice.id, "PAID")}>
-                <CelebrateButton className="rounded-lg bg-emerald-600 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-700">
-                  入金済みにする
-                </CelebrateButton>
-              </form>
             )}
             <SaveAsTemplateButton
               invoiceId={invoice.id}
@@ -136,17 +126,74 @@ export default async function InvoiceDetailPage({
         }
       />
 
+      {/* 進み具合: 下書き → 発行済 → 入金済。次にやることのボタンをここに集める */}
+      <div className="card mb-6 flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between">
+        <ol className="flex items-center gap-2 text-sm">
+          {INVOICE_STEPS.map((step, i) => {
+            const current = INVOICE_STEPS.findIndex((s) => s.key === invoice.status);
+            const done = i < current;
+            const active = i === current;
+            return (
+              <li key={step.key} className="flex items-center gap-2">
+                {i > 0 && (
+                  <span
+                    className={`h-0.5 w-6 sm:w-10 ${done || active ? "bg-sky-600" : "bg-gray-300"}`}
+                  />
+                )}
+                <span
+                  className={`flex size-7 items-center justify-center rounded-full text-xs font-bold ${
+                    done
+                      ? "bg-sky-600 text-white"
+                      : active
+                        ? "bg-sky-600 text-white ring-4 ring-sky-200"
+                        : "bg-gray-200 text-gray-500"
+                  }`}
+                >
+                  {done ? "✓" : i + 1}
+                </span>
+                <span
+                  className={
+                    active ? "font-bold text-gray-900" : done ? "text-gray-700" : "text-gray-500"
+                  }
+                >
+                  {step.label}
+                </span>
+              </li>
+            );
+          })}
+        </ol>
+        <div className="flex flex-wrap items-center gap-3">
+          {invoice.status === "DRAFT" && (
+            <>
+              <p className="text-sm text-gray-600">内容を確認して先方に送ったら →</p>
+              <form action={setInvoiceStatus.bind(null, invoice.id, "SENT")}>
+                <button type="submit" className="btn-primary">
+                  発行済みにする
+                </button>
+              </form>
+            </>
+          )}
+          {invoice.status === "SENT" && (
+            <>
+              <p className="text-sm text-gray-600">入金を確認したら →</p>
+              <form action={setInvoiceStatus.bind(null, invoice.id, "PAID")}>
+                <CelebrateButton className="btn-success">入金済みにする</CelebrateButton>
+              </form>
+            </>
+          )}
+          {invoice.status === "PAID" && (
+            <p className="text-sm font-semibold text-emerald-700">
+              🎉 入金済みです{invoice.paidAt ? `（${formatDate(invoice.paidAt)}）` : ""}
+            </p>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="card p-6">
             <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
               <h2 className="font-bold">明細</h2>
-              <div className="flex items-center gap-3 text-sm text-gray-500">
-                <InvoiceStatusBadge status={invoice.status} />
-                {invoice.paidAt && (
-                  <span>入金日: {formatDate(invoice.paidAt)}</span>
-                )}
-              </div>
             </div>
             <div className="overflow-x-auto">
             <table className="w-full min-w-[520px] text-sm mb-4">
@@ -318,7 +365,7 @@ export default async function InvoiceDetailPage({
                   </ul>
                   <button
                     type="submit"
-                    className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700"
+                    className="btn-primary px-3 py-1.5"
                   >
                     選んだ案件を明細に追加
                   </button>
@@ -329,7 +376,7 @@ export default async function InvoiceDetailPage({
         </div>
 
         <div className="space-y-6">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-sm">
+          <div className="card p-6 text-sm">
             <h2 className="font-bold mb-4">請求情報</h2>
             <dl className="space-y-3">
               <div>
@@ -364,7 +411,7 @@ export default async function InvoiceDetailPage({
             </dl>
           </div>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div className="card p-6">
             <h2 className="font-bold mb-4 text-sm">編集</h2>
             <form
               action={updateInvoice.bind(null, invoice.id)}
@@ -427,7 +474,7 @@ export default async function InvoiceDetailPage({
               </label>
               <button
                 type="submit"
-                className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
+                className="btn-primary"
               >
                 保存する
               </button>

@@ -9,7 +9,6 @@ import {
   renameDocumentFormat,
 } from "@/app/actions/documentFormats";
 import { formatDate } from "@/lib/dates";
-import Link from "next/link";
 import { requireAuth } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -31,24 +30,15 @@ export default async function DocumentFormatsPage() {
     <div>
       <PageHeader
         title="請求書の書式"
-        action={
-          <Link
-            href="/invoices"
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
-          >
-            請求書一覧へ
-          </Link>
-        }
+        description="取り込んだ書式は、請求書の詳細画面の「PDFの書式」で選べます。同じ取引先の次の請求書にも引き継がれます。"
+        back={{ href: "/invoices", label: "請求書一覧" }}
       />
-      <p className="-mt-3 mb-6 text-sm text-gray-500">
-        取り込んだ書式は、請求書の詳細画面の「PDFの書式」で選べます。同じ取引先の次の請求書にも引き継がれます。
-      </p>
 
       <div className="max-w-3xl space-y-6">
         <DocumentFormatUploader hasApiKey={hasApiKey} />
         <DocumentFormatPaste />
 
-        <section className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <section className="card">
           <h2 className="border-b border-gray-100 px-5 py-3 font-semibold">
             登録済みの書式
           </h2>

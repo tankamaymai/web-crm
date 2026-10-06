@@ -87,7 +87,7 @@ export default function ProjectNotes({
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="card p-6">
       <div className="mb-3 flex items-center gap-2">
         <h2 className="font-bold">💬 確認事項・質問メモ</h2>
         {pendingNotes.length > 0 && (

@@ -18,9 +18,12 @@ export default async function ClientsPage() {
 
   return (
     <div>
-      <PageHeader title="顧客" />
+      <PageHeader
+        title="顧客"
+        description="取引先の連絡先と、請求書の消費税の計算方法を登録します。"
+      />
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto mb-8">
+      <div className="card overflow-x-auto mb-8">
         <table className="w-full min-w-[720px] whitespace-nowrap text-sm">
           <thead className="bg-gray-50 text-left text-xs text-gray-400">
             <tr>
@@ -75,7 +78,7 @@ export default async function ClientsPage() {
         </table>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
+      <div className="card p-6 max-w-2xl">
         <h2 className="font-bold mb-4">新規顧客を登録</h2>
         <form action={createClient} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
@@ -125,7 +128,7 @@ export default async function ClientsPage() {
           <div className="sm:col-span-2">
             <button
               type="submit"
-              className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
+              className="btn-primary"
             >
               登録する
             </button>

@@ -31,7 +31,7 @@ export default function DocumentFormatPaste() {
   return (
     <form
       action={formAction}
-      className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+      className="card space-y-3 p-5"
     >
       <h2 className="font-semibold">貼り付けで登録（APIキー不要）</h2>
       <ol className="list-decimal space-y-2 pl-5 text-sm text-gray-600">
@@ -76,7 +76,7 @@ export default function DocumentFormatPaste() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
+          className="btn-primary"
         >
           {pending ? "登録中…" : "登録する"}
         </button>

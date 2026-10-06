@@ -36,7 +36,7 @@ export default function GoalGauge({
   const reachableWithPotential = achieved + potential >= goal;
 
   return (
-    <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="card mb-6 p-5">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="font-bold">
           {monthLabel}の目標

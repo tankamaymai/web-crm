@@ -21,7 +21,7 @@ export default function DocumentFormatUploader({
   return (
     <form
       action={formAction}
-      className="space-y-3 rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+      className="card space-y-3 p-5"
     >
       <h2 className="font-semibold">PDFから自動で取り込む</h2>
       <p className="text-sm text-gray-500">
@@ -64,7 +64,7 @@ export default function DocumentFormatUploader({
         <button
           type="submit"
           disabled={pending || !hasApiKey}
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-60"
+          className="btn-primary"
         >
           {pending ? "AIが読み取り中…（1分ほどかかります）" : "取り込む"}
         </button>

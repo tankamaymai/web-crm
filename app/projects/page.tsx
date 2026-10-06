@@ -161,10 +161,11 @@ export default async function ProjectsPage({
     <div>
       <PageHeader
         title="案件"
+        description="受注した仕事の一覧です。ステータスはバッジをタップするとその場で変えられます。"
         action={
           <Link
             href="/projects/new"
-            className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
+            className="btn-primary"
           >
             + 新規案件
           </Link>
@@ -205,7 +206,7 @@ export default async function ProjectsPage({
       )}
 
       {projects.length === 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 px-4 py-8 text-center text-gray-400">
+        <div className="card px-4 py-8 text-center text-gray-400">
           {isShortfall ? "請求不足の案件はありません 🎉" : "該当する案件はありません"}
         </div>
       )}
@@ -214,7 +215,7 @@ export default async function ProjectsPage({
         {monthGroups.map((group) => (
           <div
             key={group.key}
-            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
+            className="card overflow-hidden"
           >
             <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 bg-gray-50 border-b border-gray-200">
               <h2 className="font-bold text-gray-700">
@@ -232,9 +233,50 @@ export default async function ProjectsPage({
                 )}
               </span>
             </div>
-            <div className="overflow-x-auto">
+            {/* スマホ: 1案件1カードで縦に並べる（表だと横にはみ出して読みにくいため） */}
+            <ul className="divide-y divide-gray-100 sm:hidden">
+              {group.items.map((p) => (
+                <li key={p.id} className="space-y-2 px-4 py-3">
+                  <Link
+                    href={`/projects/${p.id}`}
+                    className="block font-semibold text-sky-700"
+                  >
+                    {p.title}
+                    {p.recurring && (
+                      <span className="ml-1.5 inline-block rounded-full bg-violet-100 px-2 py-0.5 text-xs font-medium text-violet-700">
+                        🔁 月額
+                      </span>
+                    )}
+                    {(pendingNotesByProject.get(p.id) ?? 0) > 0 && (
+                      <span className="ml-1.5 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                        💬 確認 {pendingNotesByProject.get(p.id)}
+                      </span>
+                    )}
+                  </Link>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                    <span className="text-gray-600">{p.client.name}</span>
+                    <DueDateLabel
+                      dueDate={p.dueDate}
+                      done={p.status === "COMPLETED" || p.status === "CANCELLED"}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <ProjectStatusSelect projectId={p.id} status={p.status} />
+                    <span className="text-right text-sm font-semibold tabular-nums">
+                      {formatYen(p.amount)}
+                      {isShortfall && (
+                        <span className="block text-xs font-medium text-amber-600">
+                          不足 {formatYen(shortfallOf(p))}（税込）
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[640px] text-sm">
-              <thead className="text-left text-xs text-gray-400">
+              <thead className="text-left text-xs text-gray-500">
                 <tr>
                   <th className="px-4 py-2 font-medium">案件名</th>
                   <th className="px-4 py-2 font-medium">顧客</th>

@@ -174,7 +174,7 @@ function TemplateForm({
       <div className="flex gap-2">
         <button
           type="submit"
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+          className="btn-primary"
         >
           {submitLabel}
         </button>
@@ -281,7 +281,7 @@ export default function InvoiceTemplateManager({
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700"
+          className="btn-primary"
         >
           + テンプレートを追加
         </button>

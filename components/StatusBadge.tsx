@@ -8,7 +8,7 @@ import {
 export function ProjectStatusBadge({ status }: { status: string }) {
   return (
     <span
-      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${
+      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${
         PROJECT_STATUS_COLORS[status] ?? "bg-gray-100 text-gray-700"
       }`}
     >
@@ -20,7 +20,7 @@ export function ProjectStatusBadge({ status }: { status: string }) {
 export function InvoiceStatusBadge({ status }: { status: string }) {
   return (
     <span
-      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium whitespace-nowrap ${
+      className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${
         INVOICE_STATUS_COLORS[status] ?? "bg-gray-100 text-gray-700"
       }`}
     >

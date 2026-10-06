@@ -22,8 +22,11 @@ export default async function ProjectEditPage({
 
   return (
     <div>
-      <PageHeader title="案件を編集" />
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-3xl">
+      <PageHeader
+        title="案件を編集"
+        back={{ href: `/projects/${project.id}`, label: "案件の詳細" }}
+      />
+      <div className="card p-6 max-w-3xl">
         <ProjectForm
           action={updateProject.bind(null, project.id)}
           clients={clients}

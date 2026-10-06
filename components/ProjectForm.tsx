@@ -151,7 +151,7 @@ export default function ProjectForm({
       <div className="flex gap-3 sm:col-span-2">
         <button
           type="submit"
-          className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
+          className="btn-primary"
         >
           保存する
         </button>

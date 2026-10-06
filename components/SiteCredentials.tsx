@@ -162,7 +162,7 @@ function CredentialForm({
       <div className="flex gap-2">
         <button
           type="submit"
-          className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700"
+          className="btn-primary px-3 py-1.5"
         >
           {submitLabel}
         </button>
@@ -267,7 +267,7 @@ export default function SiteCredentials({
   const [, startTransition] = useTransition();
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="card p-6">
       <div className="mb-4 flex items-center justify-between">
         <h2 className="font-bold">🔑 サイト情報</h2>
         {!adding && (

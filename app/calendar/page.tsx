@@ -80,6 +80,7 @@ export default async function CalendarPage({
     <div>
       <PageHeader
         title="カレンダー"
+        description="案件の期日とタスクを月ごとに確認できます。"
         action={
           <div className="flex flex-wrap items-center gap-2">
             <Link
@@ -106,7 +107,7 @@ export default async function CalendarPage({
 
       <h2 className="text-lg font-bold mb-4">{formatMonth(current)}</h2>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+      <div className="card overflow-x-auto">
         <div className="min-w-[700px]">
         <div className="grid grid-cols-7 border-b border-gray-200 bg-gray-50 text-center text-xs text-gray-500">
           {WEEKDAYS.map((w, i) => (

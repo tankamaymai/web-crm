@@ -151,7 +151,7 @@ export default function InvoiceComposer({
 
   return (
     <form action={createInvoice} className="space-y-6">
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="card p-5">
         <h2 className="mb-4 font-bold">請求先・条件</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block sm:col-span-2">
@@ -244,7 +244,7 @@ export default function InvoiceComposer({
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="card p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-bold">明細</h2>
           <div className="flex flex-wrap gap-2">
@@ -441,7 +441,7 @@ export default function InvoiceComposer({
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+      <div className="card p-5">
         <label className="block">
           <span className={labelClass}>備考</span>
           <textarea
@@ -458,7 +458,7 @@ export default function InvoiceComposer({
         <button
           type="submit"
           disabled={!clientId}
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-40"
+          className="btn-primary"
         >
           この内容で作成する
         </button>
@@ -545,7 +545,7 @@ function ProjectPicker({
             type="button"
             disabled={chosen.length === 0}
             onClick={() => onAdd(chosen)}
-            className="rounded-lg bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-40"
+            className="btn-primary px-3 py-1.5"
           >
             明細に追加
           </button>

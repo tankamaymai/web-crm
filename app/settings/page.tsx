@@ -45,11 +45,11 @@ export default async function SettingsPage({
 
   return (
     <div>
-      <PageHeader title="設定" />
-      <p className="text-sm text-gray-500 mb-6 -mt-3">
-        事業者情報は請求書PDFに印字されます。月次売上目標はダッシュボードのゲージに反映されます。
-      </p>
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
+      <PageHeader
+        title="設定"
+        description="事業者情報は請求書PDFに印字されます。月次売上目標はダッシュボードのゲージに反映されます。"
+      />
+      <div className="card p-6 max-w-2xl">
         <form action={updateSettings} className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block sm:col-span-2">
             <span className="text-sm text-gray-600">事業者名・屋号 *</span>
@@ -155,7 +155,7 @@ export default async function SettingsPage({
           <div className="sm:col-span-2">
             <button
               type="submit"
-              className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
+              className="btn-primary"
             >
               保存する
             </button>
@@ -165,7 +165,7 @@ export default async function SettingsPage({
 
       <div
         id="ai"
-        className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl"
+        className="card mt-6 p-6 max-w-2xl"
       >
         <h2 className="font-bold">🤖 AI読み取り用のAPIキー</h2>
         <p className="mt-1 text-sm text-gray-500">
@@ -204,7 +204,7 @@ export default async function SettingsPage({
           />
           <button
             type="submit"
-            className="rounded-lg bg-sky-600 text-white px-4 py-2 text-sm font-medium hover:bg-sky-700"
+            className="btn-primary"
           >
             確認して登録
           </button>
@@ -229,7 +229,7 @@ export default async function SettingsPage({
         )}
       </div>
 
-      <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6 max-w-2xl">
+      <div className="card mt-6 p-6 max-w-2xl">
         <h2 className="font-bold">🔒 ログインパスワードの変更</h2>
         <p className="mt-1 text-sm text-gray-500">
           変更すると、ログイン中の他の端末は再ログインが必要になります。

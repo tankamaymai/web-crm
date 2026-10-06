@@ -73,10 +73,12 @@ export default async function NewInvoicePage() {
     <div>
       <PageHeader
         title="請求書を作成"
+        description="顧客を選んで明細を入れると、下書きの請求書ができます。"
+        back={{ href: "/invoices", label: "請求書一覧" }}
         action={
           <Link
             href="/invoices/templates"
-            className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:bg-gray-50"
+            className="btn-secondary"
           >
             📄 テンプレート管理
           </Link>
@@ -84,7 +86,7 @@ export default async function NewInvoicePage() {
       />
 
       {clients.length === 0 ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-8 text-center text-gray-500 shadow-sm">
+        <div className="card p-8 text-center text-gray-500">
           先に顧客を登録してください。
           <Link href="/clients" className="ml-2 text-sky-600 hover:underline">
             顧客登録へ

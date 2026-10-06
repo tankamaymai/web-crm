@@ -47,7 +47,10 @@ export default async function TasksPage() {
 
   return (
     <div>
-      <PageHeader title="タスク" />
+      <PageHeader
+        title="タスク"
+        description="期日ごとにまとめて表示します。丸をタップすると完了になります。"
+      />
       <TaskBoard
         tasks={tasks}
         completedTasks={completedTasks}

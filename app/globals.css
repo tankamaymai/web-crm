@@ -1,22 +1,91 @@
 @import "tailwindcss";
 
-body {
-  background: #f4f5f7;
-  color: #1a1a2e;
-  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
-    "Yu Gothic UI", Meiryo, system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
+/*
+ * 全体のトーン調整。
+ * - 薄いグレー文字が読みにくかったので、グレーの中間色を全体的に濃くする
+ * - メインカラー（sky）を、ボタンやリンクとして目立つ濃い青に寄せる
+ */
+@theme {
+  --color-gray-200: oklch(90% 0.008 264);
+  --color-gray-300: oklch(83% 0.012 260);
+  --color-gray-400: oklch(60% 0.025 262);
+  --color-gray-500: oklch(48% 0.03 264);
+  --color-gray-600: oklch(40% 0.032 258);
+
+  --color-sky-50: oklch(97% 0.016 250);
+  --color-sky-100: oklch(93.5% 0.035 252);
+  --color-sky-200: oklch(87% 0.07 253);
+  --color-sky-300: oklch(78% 0.12 254);
+  --color-sky-400: oklch(68% 0.17 256);
+  --color-sky-500: oklch(59% 0.2 258);
+  --color-sky-600: oklch(52% 0.21 262);
+  --color-sky-700: oklch(46% 0.2 264);
+  --color-sky-800: oklch(40% 0.17 265);
+  --color-sky-900: oklch(34% 0.13 266);
 }
 
-/* フォーム要素のフォーカスを全体で統一する */
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible {
-  outline: 2px solid rgba(2, 132, 199, 0.55);
-  outline-offset: 0;
-  border-color: transparent;
+/* 素の要素の見た目。ユーティリティクラスで上書きできるよう base レイヤーに置く */
+@layer base {
+  body {
+    background: #eef0f4;
+    color: #111827;
+    font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+      "Yu Gothic UI", Meiryo, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* フォーム要素のフォーカスを全体で統一する */
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid var(--color-sky-500);
+    outline-offset: 0;
+    border-color: transparent;
+  }
+
+  /* 入力欄の枠を少し濃くして、どこに入力するか分かりやすくする */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea {
+    border-color: var(--color-gray-300);
+    background-color: #fff;
+  }
+
+  ::selection {
+    background: rgba(37, 99, 235, 0.2);
+  }
 }
 
-::selection {
-  background: rgba(2, 132, 199, 0.18);
+/* カード: 白背景＋はっきりした枠 */
+@utility card {
+  @apply rounded-xl border border-gray-200 bg-white shadow-sm;
+}
+
+@utility card-title {
+  @apply text-base font-bold text-gray-900;
+}
+
+/* ボタン。画面ごとの色のばらつきをなくし、役割で色を決める */
+@utility btn {
+  @apply inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-sky-600 text-white shadow-sm hover:bg-sky-700;
+}
+
+@utility btn-secondary {
+  @apply btn border border-gray-300 bg-white text-gray-800 hover:border-gray-400 hover:bg-gray-50;
+}
+
+@utility btn-success {
+  @apply btn bg-emerald-600 text-white shadow-sm hover:bg-emerald-700;
+}
+
+@utility btn-warning {
+  @apply btn bg-amber-500 text-white shadow-sm hover:bg-amber-600;
+}
+
+@utility btn-danger-text {
+  @apply inline-flex items-center rounded-lg px-2 py-2 text-sm font-medium text-red-600 hover:bg-red-50;
 }
