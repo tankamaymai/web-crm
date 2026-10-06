@@ -3,11 +3,11 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 
 export const metadata: Metadata = {
-  title: "Web CRM - 案件管理",
+  title: "Fleet CRM - 案件管理",
   description: "Web制作の案件・タスク・請求書を管理するアプリ",
   appleWebApp: {
     capable: true,
-    title: "Web CRM",
+    title: "Fleet CRM",
     statusBarStyle: "default",
   },
   icons: {

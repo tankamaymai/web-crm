@@ -25,8 +25,8 @@ export default async function SetupPage({
     <div className="flex min-h-[70vh] items-center justify-center">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-2">
-          <span className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-sky-600 text-lg font-bold text-white">
-            W
+          <span className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-sky-700 text-lg font-bold text-white">
+            F
           </span>
           <h1 className="text-xl font-bold">はじめの設定</h1>
           <p className="text-center text-sm text-gray-500">
