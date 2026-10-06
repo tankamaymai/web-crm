@@ -26,7 +26,7 @@ function isActive(href: string, pathname: string) {
 function Logo() {
   return (
     <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-sky-700 text-sm font-bold text-white">
-      W
+      F
     </span>
   );
 }
@@ -101,7 +101,7 @@ export default function Sidebar() {
         <Link href="/" className="flex items-center gap-2.5">
           <Logo />
           <span className="text-base font-bold leading-tight text-white">
-            Web CRM
+            Fleet CRM
           </span>
         </Link>
 
@@ -168,7 +168,7 @@ export default function Sidebar() {
                 <Logo />
                 <div>
                   <p className="text-base font-bold leading-tight text-white">
-                    Web CRM
+                    Fleet CRM
                   </p>
                   <p className="text-[11px] text-slate-400">案件管理</p>
                 </div>
@@ -199,7 +199,7 @@ export default function Sidebar() {
           <Logo />
           <div>
             <Link href="/" className="block text-base font-bold leading-tight text-white">
-              Web CRM
+              Fleet CRM
             </Link>
             <p className="text-[11px] text-slate-400">案件管理</p>
           </div>

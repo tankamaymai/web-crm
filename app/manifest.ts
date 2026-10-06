@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Web CRM - 案件管理",
-    short_name: "Web CRM",
+    name: "Fleet CRM - 案件管理",
+    short_name: "Fleet CRM",
     description: "Web制作の案件・タスク・請求書を管理するアプリ",
     start_url: "/",
     display: "standalone",
