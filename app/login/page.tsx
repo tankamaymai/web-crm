@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
 import { isLoggedIn, isPasswordConfigured } from "@/lib/auth";
 import { login } from "@/app/actions/auth";
 
@@ -19,9 +20,7 @@ export default async function LoginPage({
     <div className="flex min-h-[70vh] items-center justify-center">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex flex-col items-center gap-2">
-          <span className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-sky-700 text-lg font-bold text-white">
-            F
-          </span>
+          <BrandLogo size={64} />
           <h1 className="text-xl font-bold">Fleet CRM</h1>
           <p className="text-sm text-gray-500">案件管理</p>
         </div>

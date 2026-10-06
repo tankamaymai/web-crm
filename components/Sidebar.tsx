@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { logout } from "@/app/actions/auth";
 import NavIcon from "@/components/NavIcon";
+import BrandLogo from "@/components/BrandLogo";
 
 const NAV_ITEMS = [
   { href: "/", label: "ダッシュボード", short: "ホーム", icon: "home" },
@@ -25,9 +26,7 @@ function isActive(href: string, pathname: string) {
 
 function Logo() {
   return (
-    <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-sky-700 text-sm font-bold text-white">
-      F
-    </span>
+    <BrandLogo size={32} onDark />
   );
 }
 
