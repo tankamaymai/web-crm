@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings";
 import { requireAuth } from "@/lib/auth";
 import { renderInvoicePdf } from "@/lib/pdf/renderInvoicePdf";
-import type { InvoiceForPdf } from "@/lib/pdf/InvoicePdf";
+import type { InvoiceForPdf } from "@/lib/pdf/renderInvoicePdf";
 import { todayJST, endOfNextMonth } from "@/lib/dates";
 import { NextResponse } from "next/server";
 
@@ -10,44 +10,22 @@ export const dynamic = "force-dynamic";
 
 /** 請求書がまだ1件も無いときのプレビュー用サンプル */
 function sampleInvoice(): InvoiceForPdf {
-  const now = new Date();
   const issueDate = todayJST();
-  const client = {
-    id: "sample",
-    name: "山田 太郎",
-    company: "サンプル株式会社",
-    email: null,
-    phone: null,
-    taxMode: "STANDARD",
-    notes: null,
-    createdAt: now,
-    updatedAt: now,
-  };
   const item = (description: string, quantity: number, unitPrice: number, i: number) => ({
     id: `sample-${i}`,
-    invoiceId: "sample",
-    projectId: null,
     description,
     quantity,
     unitPrice,
-    sortOrder: i,
   });
   return {
-    id: "sample",
     invoiceNumber: "SAMPLE-0001",
-    clientId: client.id,
-    client,
-    status: "DRAFT",
+    client: { name: "山田 太郎", company: "サンプル株式会社" },
     issueDate,
     dueDate: endOfNextMonth(issueDate),
     taxRate: 10,
     taxMode: "STANDARD",
     honorific: "御中",
-    formatId: null,
     notes: "（プレビュー用のサンプルです）",
-    paidAt: null,
-    createdAt: now,
-    updatedAt: now,
     items: [
       item("Webサイト制作一式", 1, 330000, 0),
       item("保守管理費（月額）", 1, 22000, 1),

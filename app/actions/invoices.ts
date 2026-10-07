@@ -11,6 +11,7 @@ import {
 } from "@/lib/dates";
 import { nextInvoiceNumber, parseHonorific, TAX_MODES } from "@/lib/invoice";
 import { getSettings } from "@/lib/settings";
+import { normalizeOverrides } from "@/lib/invoiceDoc/overrides";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -294,4 +295,77 @@ export async function deleteInvoiceItem(id: string) {
   const item = await prisma.invoiceItem.delete({ where: { id } });
   revalidateInvoicePages(item.invoiceId);
   revalidatePath("/projects");
+}
+
+// ---- プレビュー画面（請求書エディタ）からの保存 ----
+
+/** 明細1行の品目・数量・単価（税込）を書き換える */
+export async function updateInvoiceItemFields(
+  itemId: string,
+  patch: { description?: string; quantity?: number; unitPrice?: number }
+) {
+  await requireAuth();
+  const data: { description?: string; quantity?: number; unitPrice?: number } = {};
+  if (typeof patch.description === "string") {
+    data.description = patch.description.trim().slice(0, 500);
+  }
+  if (typeof patch.quantity === "number" && Number.isFinite(patch.quantity)) {
+    data.quantity = Math.max(0, Math.round(patch.quantity));
+  }
+  if (typeof patch.unitPrice === "number" && Number.isFinite(patch.unitPrice)) {
+    data.unitPrice = Math.round(patch.unitPrice);
+  }
+  const item = await prisma.invoiceItem.update({ where: { id: itemId }, data });
+  revalidateInvoicePages(item.invoiceId);
+}
+
+/** 空の明細行を末尾に追加する */
+export async function addBlankInvoiceItem(invoiceId: string) {
+  await requireAuth();
+  const last = await prisma.invoiceItem.findFirst({
+    where: { invoiceId },
+    orderBy: { sortOrder: "desc" },
+  });
+  const item = await prisma.invoiceItem.create({
+    data: {
+      invoiceId,
+      description: "",
+      quantity: 1,
+      unitPrice: 0,
+      sortOrder: (last?.sortOrder ?? 0) + 1,
+    },
+  });
+  revalidateInvoicePages(invoiceId);
+  return { id: item.id };
+}
+
+/** 備考・発行日・支払期限を書き換える（日付は YYYY-MM-DD、null で空欄） */
+export async function updateInvoiceDocFields(
+  invoiceId: string,
+  patch: { notes?: string; issueDate?: string; dueDate?: string | null }
+) {
+  await requireAuth();
+  const data: { notes?: string | null; issueDate?: Date; dueDate?: Date | null } = {};
+  if (typeof patch.notes === "string") data.notes = patch.notes.slice(0, 2000) || null;
+  if (typeof patch.issueDate === "string") {
+    const d = parseDateInput(patch.issueDate);
+    if (d) data.issueDate = d;
+  }
+  if (patch.dueDate === null) data.dueDate = null;
+  else if (typeof patch.dueDate === "string") {
+    const d = parseDateInput(patch.dueDate);
+    if (d) data.dueDate = d;
+  }
+  await prisma.invoice.update({ where: { id: invoiceId }, data });
+  revalidateInvoicePages(invoiceId);
+}
+
+/** プレビューで書き換えた文言・書式を保存する */
+export async function saveInvoiceDocOverrides(invoiceId: string, overrides: unknown) {
+  await requireAuth();
+  await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: { docOverrides: normalizeOverrides(overrides) },
+  });
+  revalidatePath(`/invoices/${invoiceId}`);
 }

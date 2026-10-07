@@ -99,6 +99,8 @@ model Invoice {
   // PDFの書式。未設定ならアプリ標準の書式で出力する
   formatId      String?
   format        DocumentFormat? @relation(fields: [formatId], references: [id], onDelete: SetNull)
+  // プレビュー画面で書き換えた文言・文字の大きさなど（lib/invoiceDoc/overrides.ts）
+  docOverrides  Json          @default("{}")
   notes         String?
   paidAt        DateTime?
   createdAt     DateTime      @default(now())
