@@ -1,6 +1,6 @@
 // 書類の「書式（見た目）」の定義。
 // アップロードされたPDFをAIが読み取ってこの形に落とし込み、
-// lib/pdf/FormattedInvoicePdf.tsx が請求書データを流し込んで描画する。
+// lib/invoiceDoc/InvoiceDocument.tsx が請求書データを流し込んで描画する（PDFと編集画面の両方）。
 
 export const SECTION_KEYS = [
   "title",

@@ -89,3 +89,34 @@
 @utility btn-danger-text {
   @apply inline-flex items-center rounded-lg px-2 py-2 text-sm font-medium text-red-600 hover:bg-red-50;
 }
+
+/* 請求書エディタ: PDFと同じフォントで表示する */
+@font-face {
+  font-family: "NotoSansJP";
+  src: url("/fonts/NotoSansJP-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: "NotoSansJP";
+  src: url("/fonts/NotoSansJP-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-display: swap;
+}
+
+/* 請求書エディタの欄: 書き換えられる欄は触ると枠が出る（Excelのセルの感覚） */
+.invoice-field {
+  outline-offset: 1px;
+  border-radius: 1px;
+}
+.invoice-field.is-editable {
+  cursor: text;
+}
+.invoice-field.is-editable:hover {
+  outline: 1px dashed rgba(37, 99, 235, 0.55);
+}
+.invoice-field.is-selected,
+.invoice-field:focus {
+  outline: 2px solid #2563eb;
+  background-color: rgba(37, 99, 235, 0.06);
+}

@@ -1,18 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import {
-  addInvoiceItem,
   addProjectsToInvoice,
   deleteInvoice,
-  deleteInvoiceItem,
   setInvoiceStatus,
   updateInvoice,
 } from "@/app/actions/invoices";
 import {
-  calcInvoiceTotals,
-  exclusiveUnitPrice,
   HONORIFICS,
   recipientLabel,
-  transitionalDeductionRate,
 } from "@/lib/invoice";
 import { formatDate, formatYen, toDateInputValue } from "@/lib/dates";
 import PageHeader from "@/components/PageHeader";
@@ -21,6 +16,10 @@ import SaveAsTemplateButton from "@/components/SaveAsTemplateButton";
 import DeleteButton from "@/components/DeleteButton";
 import TaxModeSelect from "@/components/TaxModeSelect";
 import InvoiceFormatSelect from "@/components/InvoiceFormatSelect";
+import InvoiceEditor from "@/components/invoice-editor/InvoiceEditor";
+import { normalizeOverrides } from "@/lib/invoiceDoc/overrides";
+import { normalizeLayout, STANDARD_LAYOUT } from "@/lib/documentFormat";
+import { getSettings } from "@/lib/settings";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { requireAuth } from "@/lib/auth";
@@ -48,9 +47,14 @@ export default async function InvoiceDetailPage({
         orderBy: { sortOrder: "asc" },
         include: { project: { select: { id: true, title: true } } },
       },
+      format: true,
     },
   });
   if (!invoice) notFound();
+  const settings = await getSettings();
+  const layout = invoice.format
+    ? normalizeLayout(invoice.format.layout)
+    : STANDARD_LAYOUT;
 
   const formats = await prisma.documentFormat.findMany({
     orderBy: { createdAt: "desc" },
@@ -77,15 +81,6 @@ export default async function InvoiceDetailPage({
     (p) => !linkedProjectIds.has(p.id)
   );
 
-  const { subtotal, taxAmount, adjustment, total } = calcInvoiceTotals(
-    invoice.items,
-    invoice.taxRate,
-    invoice.taxMode,
-    invoice.issueDate
-  );
-  const deductionPercent = Math.round(
-    transitionalDeductionRate(invoice.issueDate) * 100
-  );
   const inputClass =
     "mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm";
 
@@ -191,150 +186,43 @@ export default async function InvoiceDetailPage({
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <div className="card p-6">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-              <h2 className="font-bold">明細</h2>
-            </div>
-            <div className="overflow-x-auto">
-            <table className="w-full min-w-[520px] text-sm mb-4">
-              <thead className="text-gray-500 text-left border-b border-gray-200">
-                <tr>
-                  <th className="py-2 font-medium">品目</th>
-                  <th className="py-2 font-medium text-right w-20">数量</th>
-                  <th className="py-2 font-medium text-right w-32">単価(税抜)</th>
-                  <th className="py-2 font-medium text-right w-32">金額(税込)</th>
-                  <th className="w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {invoice.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="py-2.5">
-                      <span className="block">{item.description}</span>
-                      {item.project && (
-                        <Link
-                          href={`/projects/${item.project.id}`}
-                          className="mt-1 inline-block max-w-full truncate rounded bg-gray-100 px-1.5 py-0.5 align-top text-xs text-gray-500 hover:text-sky-600"
-                        >
-                          {item.project.title}
-                        </Link>
-                      )}
-                    </td>
-                    <td className="py-2.5 text-right tabular-nums">
-                      {item.quantity}
-                    </td>
-                    <td className="py-2.5 text-right tabular-nums">
-                      {formatYen(exclusiveUnitPrice(item.unitPrice, invoice.taxRate))}
-                    </td>
-                    <td className="py-2.5 text-right tabular-nums">
-                      {formatYen(item.quantity * item.unitPrice)}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <DeleteButton
-                        action={deleteInvoiceItem.bind(null, item.id)}
-                        label="✕"
-                        confirmMessage="この明細を削除しますか？"
-                        className="text-gray-400 hover:text-red-500"
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="border-t border-gray-200">
-                <tr>
-                  <td colSpan={3} className="py-2 text-right text-gray-500">
-                    小計（税抜）
-                  </td>
-                  <td className="py-2 text-right tabular-nums">
-                    {formatYen(subtotal)}
-                  </td>
-                  <td></td>
-                </tr>
-                <tr>
-                  <td colSpan={3} className="py-1 text-right text-gray-500">
-                    {invoice.taxMode === "STANDARD"
-                      ? `消費税（${invoice.taxRate}%）`
-                      : `消費税相当額（${invoice.taxRate}%）`}
-                  </td>
-                  <td className="py-1 text-right tabular-nums">
-                    {formatYen(taxAmount)}
-                  </td>
-                  <td></td>
-                </tr>
-                {adjustment !== 0 && (
-                  <tr>
-                    <td colSpan={3} className="py-1 text-right text-orange-600">
-                      経過措置調整（インボイス未登録・控除{deductionPercent}%）
-                    </td>
-                    <td className="py-1 text-right tabular-nums text-orange-600">
-                      −{formatYen(-adjustment)}
-                    </td>
-                    <td></td>
-                  </tr>
-                )}
-                <tr className="font-bold text-base">
-                  <td colSpan={3} className="py-2 text-right">
-                    合計（税込）
-                  </td>
-                  <td className="py-2 text-right tabular-nums">
-                    {formatYen(total)}
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-            </div>
-
-            <div className="border-t border-gray-100 pt-4 space-y-3">
-              <form
-                action={addInvoiceItem.bind(null, invoice.id)}
-                className="flex flex-wrap gap-2"
-              >
-                <input
-                  name="description"
-                  required
-                  placeholder="品目を追加..."
-                  className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-                <select
-                  name="itemProjectId"
-                  defaultValue=""
-                  className="max-w-44 rounded-lg border border-gray-300 px-2 py-2 text-sm text-gray-600"
-                  aria-label="紐付ける案件"
-                >
-                  <option value="">案件なし</option>
-                  {clientProjects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.title}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  name="quantity"
-                  type="number"
-                  min={1}
-                  defaultValue={1}
-                  className="w-20 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-                <input
-                  name="unitPrice"
-                  type="number"
-                  min={0}
-                  placeholder="単価（税込）"
-                  className="w-32 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-                <button
-                  type="submit"
-                  className="rounded-lg bg-slate-800 text-white px-4 py-2 text-sm hover:bg-slate-700"
-                >
-                  追加
-                </button>
-              </form>
-
+          <InvoiceEditor
+            invoiceId={invoice.id}
+            invoice={{
+              invoiceNumber: invoice.invoiceNumber,
+              issueDate: invoice.issueDate,
+              dueDate: invoice.dueDate,
+              taxRate: invoice.taxRate,
+              taxMode: invoice.taxMode,
+              honorific: invoice.honorific,
+              notes: invoice.notes,
+              client: { name: invoice.client.name, company: invoice.client.company },
+              items: invoice.items.map((item) => ({
+                id: item.id,
+                description: item.description,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice,
+              })),
+            }}
+            // パスワード等を含む設定全体はブラウザに渡さず、請求書に載せる項目だけ渡す
+            issuer={{
+              businessName: settings.businessName,
+              postalCode: settings.postalCode,
+              address: settings.address,
+              phone: settings.phone,
+              email: settings.email,
+              registrationNumber: settings.registrationNumber,
+              bankInfo: settings.bankInfo,
+            }}
+            layout={layout}
+            overrides={normalizeOverrides(invoice.docOverrides)}
+            pdfHref={`/api/invoices/${invoice.id}/pdf`}
+            xlsxHref={`/api/invoices/${invoice.id}/xlsx`}
+          />
               {addableProjects.length > 0 && (
                 <form
                   action={addProjectsToInvoice.bind(null, invoice.id)}
-                  className="rounded-lg border border-sky-200 bg-sky-50/60 p-3"
+                  className="card border-sky-200 bg-sky-50/60 p-4"
                 >
                   <p className="mb-2 text-sm font-medium text-sky-900">
                     この顧客の他の案件をまとめて明細に追加
@@ -371,8 +259,6 @@ export default async function InvoiceDetailPage({
                   </button>
                 </form>
               )}
-            </div>
-          </div>
         </div>
 
         <div className="space-y-6">
@@ -414,6 +300,8 @@ export default async function InvoiceDetailPage({
           <div className="card p-6">
             <h2 className="font-bold mb-4 text-sm">編集</h2>
             <form
+              // プレビュー側で日付や備考を書き換えたら、こちらの入力欄も最新の値に作り直す
+              key={invoice.updatedAt.toISOString()}
               action={updateInvoice.bind(null, invoice.id)}
               className="space-y-3"
             >
