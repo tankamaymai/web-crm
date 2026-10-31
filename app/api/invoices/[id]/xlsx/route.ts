@@ -5,6 +5,7 @@ import { buildInvoiceXlsx } from "@/lib/invoiceDoc/buildInvoiceXlsx";
 import { normalizeOverrides } from "@/lib/invoiceDoc/overrides";
 import { normalizeLayout, STANDARD_LAYOUT } from "@/lib/documentFormat";
 import { NextResponse } from "next/server";
+import { contentDisposition, invoiceFileName } from "@/lib/invoiceDoc/fileName";
 
 export const dynamic = "force-dynamic";
 
@@ -34,16 +35,17 @@ export async function GET(
     normalizeOverrides(invoice.docOverrides)
   );
 
-  // 保存時のファイル名はPDFと同じ「取引先名 御請求書 ◯月分」
-  const clientName = invoice.client.company || invoice.client.name;
-  const month = invoice.issueDate.getUTCMonth() + 1;
-  const fileName = `${clientName} 御請求書 ${month}月分.xlsx`.replace(/[\\/:*?"<>|]/g, "_");
-
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type":
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${invoice.invoiceNumber}.xlsx"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+      "Content-Disposition": contentDisposition(
+        "attachment",
+        `${invoice.invoiceNumber}.xlsx`,
+        invoiceFileName(invoice, "xlsx")
+      ),
+      "Content-Length": String(buffer.length),
+      "Cache-Control": "private, no-store",
     },
   });
 }
