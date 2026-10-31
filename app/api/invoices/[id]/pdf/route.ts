@@ -3,11 +3,12 @@ import { getSettings } from "@/lib/settings";
 import { renderInvoicePdf } from "@/lib/pdf/renderInvoicePdf";
 import { NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth";
+import { contentDisposition, invoiceFileName } from "@/lib/invoiceDoc/fileName";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   await requireAuth();
@@ -27,19 +28,20 @@ export async function GET(
 
   const buffer = await renderInvoicePdf(invoice, settings, invoice.format);
 
-  // 保存時のファイル名: 「取引先名 御請求書 9月分.pdf」（月は発行日の月）
-  const clientName = invoice.client.company || invoice.client.name;
-  const month = invoice.issueDate.getUTCMonth() + 1;
-  const fileName = `${clientName} 御請求書 ${month}月分.pdf`.replace(
-    /[\\/:*?"<>|]/g,
-    "_"
-  );
+  // ?download=1 のときは、ブラウザのPDF表示を経由せず直接ダウンロードさせる
+  const download = new URL(request.url).searchParams.get("download") === "1";
+  const fileName = invoiceFileName(invoice, "pdf");
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      // 日本語ファイル名は filename* で渡し、古いブラウザ向けに英数字名も添える
-      "Content-Disposition": `inline; filename="${invoice.invoiceNumber}.pdf"; filename*=UTF-8''${encodeURIComponent(fileName)}`,
+      "Content-Disposition": contentDisposition(
+        download ? "attachment" : "inline",
+        `${invoice.invoiceNumber}.pdf`,
+        fileName
+      ),
+      "Content-Length": String(buffer.length),
+      "Cache-Control": "private, no-store",
     },
   });
 }

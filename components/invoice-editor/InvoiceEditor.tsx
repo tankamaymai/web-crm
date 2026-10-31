@@ -402,6 +402,32 @@ export default function InvoiceEditor({
   };
 
   const saving = pending > 0 || overridesDirty;
+
+  // 印刷: PDFを画面に見えない枠で読み込み、そのまま印刷画面を開く（ダウンロードを経由しない）
+  const [printing, setPrinting] = useState(false);
+  const printPdf = () => {
+    setPrinting(true);
+    document.getElementById("invoice-print-frame")?.remove();
+    const frame = document.createElement("iframe");
+    frame.id = "invoice-print-frame";
+    frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+    frame.src = `${pdfHref}?print=${Date.now()}`;
+    frame.onload = () => {
+      // PDFの表示が整うまで少し待ってから印刷する
+      setTimeout(() => {
+        try {
+          frame.contentWindow?.focus();
+          frame.contentWindow?.print();
+        } catch {
+          // 枠の中で印刷できないブラウザでは、PDFを新しいタブで開いてそこから印刷してもらう
+          window.open(pdfHref, "_blank", "noopener");
+        } finally {
+          setPrinting(false);
+        }
+      }, 400);
+    };
+    document.body.appendChild(frame);
+  };
   const keepFocus = (e: React.MouseEvent) => e.preventDefault();
   const toolBtn =
     "flex h-8 min-w-8 items-center justify-center rounded-md border border-gray-300 bg-white px-2 text-sm font-semibold text-gray-800 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40";
@@ -507,13 +533,20 @@ export default function InvoiceEditor({
           <span className={`text-xs ${error ? "text-red-600" : "text-gray-500"}`} aria-live="polite">
             {error ?? (saving ? "保存中…" : "✓ 保存済み")}
           </span>
-          <a
-            href={pdfHref}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`btn-primary px-3 py-1.5 ${saving ? "pointer-events-none opacity-50" : ""}`}
+          <button
+            type="button"
+            onClick={printPdf}
+            disabled={saving || printing}
+            className="btn-primary px-3 py-1.5"
           >
-            PDF
+            {printing ? "準備中…" : "印刷"}
+          </button>
+          <a
+            href={`${pdfHref}?download=1`}
+            download
+            className={`btn-secondary px-3 py-1.5 ${saving ? "pointer-events-none opacity-50" : ""}`}
+          >
+            PDF保存
           </a>
           <a
             href={xlsxHref}

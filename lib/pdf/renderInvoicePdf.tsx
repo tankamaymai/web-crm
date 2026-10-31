@@ -6,6 +6,7 @@ import InvoiceDocument, {
 } from "@/lib/invoiceDoc/InvoiceDocument";
 import { normalizeOverrides } from "@/lib/invoiceDoc/overrides";
 import { normalizeLayout, STANDARD_LAYOUT } from "@/lib/documentFormat";
+import { sanitizeFileNamePart } from "@/lib/invoiceDoc/fileName";
 import "./fonts";
 
 export type InvoiceForPdf = DocInvoice & { docOverrides?: unknown };
@@ -19,8 +20,9 @@ export function renderInvoicePdf(
   const layout = format ? normalizeLayout(format.layout) : STANDARD_LAYOUT;
   return renderToBuffer(
     <Document
-      title={`${layout.documentTitle} ${invoice.invoiceNumber}`}
-      author={settings.businessName || undefined}
+      // 印刷画面で「PDFとして保存」したときの既定のファイル名にもなるので、使えない文字は除く
+      title={sanitizeFileNamePart(`${layout.documentTitle} ${invoice.invoiceNumber}`)}
+      author={sanitizeFileNamePart(settings.businessName) || undefined}
     >
       <Page size="A4" style={pageStyle(layout)}>
         <InvoiceDocument
