@@ -92,13 +92,14 @@ export default async function InvoiceDetailPage({
         back={{ href: "/invoices", label: "請求書一覧" }}
         action={
           <div className="flex flex-wrap gap-2 items-center">
+            {/* ChromeのPDF表示画面から保存すると、Macでは隠しファイルになって保存できないことがあるため、
+                表示画面を経由せず直接ダウンロードする */}
             <a
-              href={`/api/invoices/${invoice.id}/pdf`}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={`/api/invoices/${invoice.id}/pdf?download=1`}
+              download
               className="btn-secondary"
             >
-              📄 PDFを開く
+              📄 PDFをダウンロード
             </a>
             {formats.length > 0 && (
               <InvoiceFormatSelect
