@@ -32,6 +32,7 @@ import {
   updateInvoiceDocFields,
   updateInvoiceItemFields,
 } from "@/app/actions/invoices";
+import FileSaveButton from "@/components/FileSaveButton";
 
 // 請求書を、PDFと同じ見た目のまま直接書き換えられるエディタ。
 // クリックした欄をその場で編集し、ツールバーで文字の大きさ・太字・色・揃えを変える（Excelのセルの感覚）。
@@ -207,6 +208,8 @@ export default function InvoiceEditor({
   overrides: initialOverrides,
   pdfHref,
   xlsxHref,
+  pdfFileName,
+  xlsxFileName,
 }: {
   invoiceId: string;
   invoice: DocInvoice;
@@ -215,6 +218,8 @@ export default function InvoiceEditor({
   overrides: DocOverrides;
   pdfHref: string;
   xlsxHref: string;
+  pdfFileName: string;
+  xlsxFileName: string;
 }) {
   // ---- 請求書のデータ（サーバーの値を元に、編集はすぐ画面に反映する） ----
   const serverData = {
@@ -541,19 +546,26 @@ export default function InvoiceEditor({
           >
             {printing ? "準備中…" : "印刷"}
           </button>
-          <a
+          <FileSaveButton
             href={`${pdfHref}?download=1`}
-            download
-            className={`btn-secondary px-3 py-1.5 ${saving ? "pointer-events-none opacity-50" : ""}`}
+            fileName={pdfFileName}
+            mimeType="application/pdf"
+            description="PDF"
+            disabled={saving}
+            className="btn-secondary px-3 py-1.5"
           >
             PDF保存
-          </a>
-          <a
+          </FileSaveButton>
+          <FileSaveButton
             href={xlsxHref}
-            className={`btn-secondary px-3 py-1.5 ${saving ? "pointer-events-none opacity-50" : ""}`}
+            fileName={xlsxFileName}
+            mimeType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            description="Excel"
+            disabled={saving}
+            className="btn-secondary px-3 py-1.5"
           >
             Excel
-          </a>
+          </FileSaveButton>
         </div>
       </div>
 

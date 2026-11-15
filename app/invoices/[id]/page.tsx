@@ -17,6 +17,8 @@ import DeleteButton from "@/components/DeleteButton";
 import TaxModeSelect from "@/components/TaxModeSelect";
 import InvoiceFormatSelect from "@/components/InvoiceFormatSelect";
 import InvoiceEditor from "@/components/invoice-editor/InvoiceEditor";
+import FileSaveButton from "@/components/FileSaveButton";
+import { invoiceFileName } from "@/lib/invoiceDoc/fileName";
 import { normalizeOverrides } from "@/lib/invoiceDoc/overrides";
 import { normalizeLayout, STANDARD_LAYOUT } from "@/lib/documentFormat";
 import { getSettings } from "@/lib/settings";
@@ -94,13 +96,15 @@ export default async function InvoiceDetailPage({
           <div className="flex flex-wrap gap-2 items-center">
             {/* ChromeのPDF表示画面から保存すると、Macでは隠しファイルになって保存できないことがあるため、
                 表示画面を経由せず直接ダウンロードする */}
-            <a
+            <FileSaveButton
               href={`/api/invoices/${invoice.id}/pdf?download=1`}
-              download
+              fileName={invoiceFileName(invoice, "pdf")}
+              mimeType="application/pdf"
+              description="PDF"
               className="btn-secondary"
             >
               📄 PDFをダウンロード
-            </a>
+            </FileSaveButton>
             {formats.length > 0 && (
               <InvoiceFormatSelect
                 invoiceId={invoice.id}
@@ -218,6 +222,8 @@ export default async function InvoiceDetailPage({
             layout={layout}
             overrides={normalizeOverrides(invoice.docOverrides)}
             pdfHref={`/api/invoices/${invoice.id}/pdf`}
+            pdfFileName={invoiceFileName(invoice, "pdf")}
+            xlsxFileName={invoiceFileName(invoice, "xlsx")}
             xlsxHref={`/api/invoices/${invoice.id}/xlsx`}
           />
               {addableProjects.length > 0 && (
